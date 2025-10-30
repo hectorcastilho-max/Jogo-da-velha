@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>🎮 Jogo da Velha - Modo Festa</title>
+  <title>🎮 Jogo da Velha - Modo Relax + Festa</title>
   <style>
     body {
       margin: 0;
@@ -34,7 +34,6 @@
       border-radius: 20px;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
       text-align: center;
-      position: relative;
       transform: scale(1.25);
       z-index: 2;
     }
@@ -97,7 +96,6 @@
       background: #0d47a1;
     }
 
-    /* ✨ Fundo animado */
     .bg-animation {
       position: fixed;
       top: 0;
@@ -117,14 +115,8 @@
     }
 
     @keyframes rise {
-      0% {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(-120vh) scale(1.5);
-        opacity: 0;
-      }
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-120vh) scale(1.5); opacity: 0; }
     }
 
     canvas {
@@ -138,7 +130,6 @@
     }
   </style>
 </head>
-
 <body>
   <div class="bg-animation" id="background"></div>
   <canvas id="confetti"></canvas>
@@ -151,7 +142,7 @@
   </div>
 
   <script>
-    /* ====== 🟦 Jogo ====== */
+    /* ====== JOGO ====== */
     const boardEl = document.getElementById('board');
     const info = document.getElementById('info');
     const resetBtn = document.getElementById('reset');
@@ -159,111 +150,145 @@
     const ctx = canvas.getContext('2d');
 
     let board = Array(9).fill('');
-    const lines = [
-      [0,1,2],[3,4,5],[6,7,8],
-      [0,3,6],[1,4,7],[2,5,8],
-      [0,4,8],[2,4,6]
-    ];
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
     let current = 'X';
     let gameOver = false;
 
+    render();
+
     function render() {
       boardEl.innerHTML = '';
-      board.forEach((v, i) => {
+      board.forEach((v,i)=>{
         const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.textContent = v;
-        cell.addEventListener('click', () => onCellClick(i));
+        cell.className='cell';
+        cell.textContent=v;
+        cell.addEventListener('click',()=>onCellClick(i));
         boardEl.appendChild(cell);
       });
-      info.textContent = `Vez de ${current}`;
+      info.textContent=`Vez de ${current}`;
     }
 
-    function checkWinner(bd, player) {
-      return lines.some(([a,b,c]) => bd[a] === player && bd[b] === player && bd[c] === player);
+    function checkWinner(bd,player){
+      return lines.some(([a,b,c])=> bd[a]===player && bd[b]===player && bd[c]===player);
     }
 
-    function onCellClick(i) {
-      if (gameOver || board[i]) return;
-      board[i] = current;
-      const cells = document.querySelectorAll('.cell');
-      cells[i].textContent = board[i];
+    /* ====== SONS ====== */
+    const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
 
-      if (checkWinner(board, current)) {
-        gameOver = true;
-        info.textContent = `🎉 ${current} venceu!`;
+    function playTone(frequency,duration=0.3,volume=0.2){
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type='sine';
+      osc.frequency.value=frequency;
+      gain.gain.value=volume;
+      osc.start();
+      osc.stop(audioCtx.currentTime+duration);
+    }
+
+    function playVictorySound(){
+      playTone(523,0.15); playTone(659,0.15); playTone(784,0.15); playTone(1046,0.15);
+    }
+
+    function playDrawSound(){
+      playTone(220,0.25,0.15); playTone(196,0.25,0.15);
+    }
+
+    function playBackgroundMusic(){
+      let frequencies=[261,329,392,523];
+      let i=0;
+      const interval=setInterval(()=>{
+        if(gameOver){clearInterval(interval); return;}
+        playTone(frequencies[i%frequencies.length],0.4,0.05);
+        i++;
+      },400);
+    }
+
+    playBackgroundMusic();
+
+    function onCellClick(i){
+      if(gameOver || board[i]) return;
+      board[i]=current;
+      const cells=document.querySelectorAll('.cell');
+      cells[i].textContent=board[i];
+
+      if(checkWinner(board,current)){
+        gameOver=true;
+        info.textContent=`🎉 ${current} venceu!`;
         launchConfetti();
-        document.body.classList.add("festa"); // 🌈 ativa o modo festa
-      } else if (board.every(Boolean)) {
-        gameOver = true;
-        info.textContent = `😐 Empate!`;
+        playVictorySound();
+        document.body.classList.add("festa");
+      } else if(board.every(Boolean)){
+        gameOver=true;
+        info.textContent=`😐 Empate!`;
+        playDrawSound();
       } else {
-        current = current === 'X' ? 'O' : 'X';
-        info.textContent = `Vez de ${current}`;
+        current = current==='X'?'O':'X';
+        info.textContent=`Vez de ${current}`;
       }
     }
 
-    resetBtn.addEventListener('click', () => {
-      board = Array(9).fill('');
-      current = 'X';
-      gameOver = false;
-      info.textContent = '';
-      document.body.classList.remove("festa"); // 🔥 volta ao normal
+    resetBtn.addEventListener('click',()=>{
+      board=Array(9).fill('');
+      current='X';
+      gameOver=false;
+      info.textContent='';
+      document.body.classList.remove("festa");
       render();
+      playBackgroundMusic();
     });
 
-    render();
-
-    /* ====== 🎆 Confete ====== */
-    let confettis = [];
-    function launchConfetti() {
-      const colors = ['#f44336', '#ffeb3b', '#4caf50', '#2196f3', '#9c27b0'];
-      for (let i = 0; i < 300; i++) {
+    /* ====== Confete ====== */
+    let confettis=[];
+    function launchConfetti(){
+      const colors=['#f44336','#ffeb3b','#4caf50','#2196f3','#9c27b0'];
+      for(let i=0;i<300;i++){
         confettis.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height - canvas.height,
-          w: Math.random() * 6 + 4,
-          h: Math.random() * 8 + 4,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          speed: Math.random() * 5 + 2,
-          angle: Math.random() * 360
+          x:Math.random()*canvas.width,
+          y:Math.random()*canvas.height-canvas.height,
+          w:Math.random()*6+4,
+          h:Math.random()*8+4,
+          color:colors[Math.floor(Math.random()*colors.length)],
+          speed:Math.random()*5+2,
+          angle:Math.random()*360
         });
       }
       animateConfetti();
-      setTimeout(() => confettis = [], 6000);
+      setTimeout(()=>confettis=[],6000);
     }
 
-    function animateConfetti() {
-      if (confettis.length === 0) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      confettis.forEach((c) => {
-        ctx.fillStyle = c.color;
-        ctx.fillRect(c.x, c.y, c.w, c.h);
-        c.y += c.speed;
-        c.x += Math.sin(c.angle) * 2;
-        if (c.y > canvas.height) c.y = -10;
+    function animateConfetti(){
+      if(confettis.length===0) return;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      confettis.forEach(c=>{
+        ctx.fillStyle=c.color;
+        ctx.fillRect(c.x,c.y,c.w,c.h);
+        c.y+=c.speed;
+        c.x+=Math.sin(c.angle)*2;
+        if(c.y>canvas.height)c.y=-10;
       });
       requestAnimationFrame(animateConfetti);
     }
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+    function resizeCanvas(){
+      canvas.width=window.innerWidth;
+      canvas.height=window.innerHeight;
     }
-    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('resize',resizeCanvas);
     resizeCanvas();
 
-    /* ====== 💫 Fundo animado ====== */
-    const bg = document.getElementById('background');
-    for (let i = 0; i < 20; i++) {
-      const bubble = document.createElement('div');
+    /* ====== Fundo animado ====== */
+    const bg=document.getElementById('background');
+    for(let i=0;i<20;i++){
+      const bubble=document.createElement('div');
       bubble.classList.add('bubble');
-      const size = Math.random() * 60 + 20;
-      bubble.style.width = size + 'px';
-      bubble.style.height = size + 'px';
-      bubble.style.left = Math.random() * 100 + '%';
-      bubble.style.animationDuration = (6 + Math.random() * 8) + 's';
-      bubble.style.opacity = Math.random();
+      const size=Math.random()*60+20;
+      bubble.style.width=size+'px';
+      bubble.style.height=size+'px';
+      bubble.style.left=Math.random()*100+'%';
+      bubble.style.animationDuration=(6+Math.random()*8)+'s';
+      bubble.style.opacity=Math.random();
       bg.appendChild(bubble);
     }
   </script>
