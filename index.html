@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Jogo da Velha - Versão Premium 🎮</title>
+  <title>🎮 Jogo da Velha - Modo Festa</title>
   <style>
     body {
       margin: 0;
@@ -12,14 +12,27 @@
       align-items: center;
       justify-content: center;
       font-family: "Poppins", sans-serif;
-      background: radial-gradient(circle at center, #c7e9ff, #81d4fa, #4fc3f7);
+      background: radial-gradient(circle at center, #bbdefb, #64b5f6, #2196f3);
+      transition: background 1s ease;
+    }
+
+    body.festa {
+      animation: festaCores 4s linear infinite;
+    }
+
+    @keyframes festaCores {
+      0% { background: linear-gradient(135deg, #ff4081, #ffeb3b); }
+      25% { background: linear-gradient(135deg, #4caf50, #00bcd4); }
+      50% { background: linear-gradient(135deg, #ff5722, #9c27b0); }
+      75% { background: linear-gradient(135deg, #2196f3, #e91e63); }
+      100% { background: linear-gradient(135deg, #ff4081, #ffeb3b); }
     }
 
     .container {
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.92);
       padding: 40px;
       border-radius: 20px;
-      box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
       text-align: center;
       position: relative;
       transform: scale(1.25);
@@ -29,7 +42,7 @@
     h1 {
       margin-top: 0;
       color: #0d47a1;
-      text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     }
 
     #board {
@@ -138,7 +151,7 @@
   </div>
 
   <script>
-    /* ====== 🟦 Jogo da Velha ====== */
+    /* ====== 🟦 Jogo ====== */
     const boardEl = document.getElementById('board');
     const info = document.getElementById('info');
     const resetBtn = document.getElementById('reset');
@@ -180,6 +193,7 @@
         gameOver = true;
         info.textContent = `🎉 ${current} venceu!`;
         launchConfetti();
+        document.body.classList.add("festa"); // 🌈 ativa o modo festa
       } else if (board.every(Boolean)) {
         gameOver = true;
         info.textContent = `😐 Empate!`;
@@ -194,12 +208,13 @@
       current = 'X';
       gameOver = false;
       info.textContent = '';
+      document.body.classList.remove("festa"); // 🔥 volta ao normal
       render();
     });
 
     render();
 
-    /* ====== 🎆 Confete animado ====== */
+    /* ====== 🎆 Confete ====== */
     let confettis = [];
     function launchConfetti() {
       const colors = ['#f44336', '#ffeb3b', '#4caf50', '#2196f3', '#9c27b0'];
@@ -215,7 +230,7 @@
         });
       }
       animateConfetti();
-      setTimeout(() => confettis = [], 5000);
+      setTimeout(() => confettis = [], 6000);
     }
 
     function animateConfetti() {
@@ -238,7 +253,7 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    /* ====== 💫 Fundo com bolhas animadas ====== */
+    /* ====== 💫 Fundo animado ====== */
     const bg = document.getElementById('background');
     for (let i = 0; i < 20; i++) {
       const bubble = document.createElement('div');
