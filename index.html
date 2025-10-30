@@ -2,35 +2,39 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Jogo da Velha</title>
+  <title>Jogo da Velha - Versão Premium 🎮</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-      height: 100vh;
       margin: 0;
+      height: 100vh;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: "Poppins", sans-serif;
+      background: radial-gradient(circle at center, #c7e9ff, #81d4fa, #4fc3f7);
     }
 
     .container {
-      background: white;
+      background: rgba(255, 255, 255, 0.9);
       padding: 40px;
       border-radius: 20px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-      transform: scale(1.25); /* 👈 aumenta o tamanho em 25% */
+      box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+      text-align: center;
+      position: relative;
+      transform: scale(1.25);
+      z-index: 2;
     }
 
     h1 {
       margin-top: 0;
-      color: #333;
+      color: #0d47a1;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
 
     #board {
       display: grid;
-      grid-template-columns: repeat(3, 125px); /* aumentado */
+      grid-template-columns: repeat(3, 125px);
       grid-gap: 12px;
       justify-content: center;
       margin-top: 20px;
@@ -39,72 +43,107 @@
     .cell {
       width: 125px;
       height: 125px;
-      background: #fff;
-      border: 3px solid #2196f3;
+      background: white;
+      border: 3px solid #1976d2;
+      border-radius: 15px;
       font-size: 2.5rem;
+      font-weight: bold;
+      color: #0d47a1;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      border-radius: 12px;
-      transition: background 0.3s, transform 0.2s;
+      transition: all 0.3s ease;
     }
 
     .cell:hover {
+      transform: scale(1.08);
       background: #e3f2fd;
-      transform: scale(1.05);
     }
 
     #info {
       margin-top: 20px;
-      font-size: 1.3rem;
+      font-size: 1.4rem;
       min-height: 1.5em;
-      color: #333;
+      color: #0d47a1;
     }
 
     #reset {
-      margin-top: 15px;
+      margin-top: 20px;
       padding: 10px 25px;
-      background: #2196f3;
+      background: #1976d2;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       font-size: 1rem;
-      transition: background 0.3s;
+      transition: 0.3s;
     }
 
     #reset:hover {
-      background: #1976d2;
+      background: #0d47a1;
+    }
+
+    /* ✨ Fundo animado */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .bubble {
+      position: absolute;
+      bottom: -100px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      animation: rise 10s infinite ease-in;
+    }
+
+    @keyframes rise {
+      0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-120vh) scale(1.5);
+        opacity: 0;
+      }
     }
 
     canvas {
       position: fixed;
       top: 0;
       left: 0;
-      pointer-events: none;
       width: 100%;
       height: 100%;
-      z-index: 10;
+      pointer-events: none;
+      z-index: 1;
     }
   </style>
 </head>
 
 <body>
+  <div class="bg-animation" id="background"></div>
+  <canvas id="confetti"></canvas>
+
   <div class="container">
     <h1>🎮 Jogo da Velha</h1>
     <div id="board"></div>
     <div id="info"></div>
     <button id="reset">Reiniciar</button>
   </div>
-  <canvas id="confetti"></canvas>
 
   <script>
+    /* ====== 🟦 Jogo da Velha ====== */
     const boardEl = document.getElementById('board');
     const info = document.getElementById('info');
     const resetBtn = document.getElementById('reset');
-    const confettiCanvas = document.getElementById('confetti');
-    const ctx = confettiCanvas.getContext('2d');
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
 
     let board = Array(9).fill('');
     const lines = [
@@ -115,26 +154,6 @@
     let current = 'X';
     let gameOver = false;
 
-    const frasesVitoria = [
-      "🎉 Que jogada incrível!",
-      "🏆 Vitória merecida!",
-      "🔥 Você dominou o tabuleiro!",
-      "👏 Excelente estratégia!",
-      "😎 Imparável!"
-    ];
-
-    const frasesEmpate = [
-      "😐 Empate! Que equilíbrio!",
-      "🤝 Deu velha, ninguém venceu!",
-      "⚖️ Igualdade total!",
-      "😅 Empate... Bora revanche?",
-      "😬 Que jogo disputado!"
-    ];
-
-    function fraseAleatoria(frases) {
-      return frases[Math.floor(Math.random() * frases.length)];
-    }
-
     function render() {
       boardEl.innerHTML = '';
       board.forEach((v, i) => {
@@ -144,11 +163,6 @@
         cell.addEventListener('click', () => onCellClick(i));
         boardEl.appendChild(cell);
       });
-      updateInfo();
-    }
-
-    function updateInfo() {
-      if (gameOver) return;
       info.textContent = `Vez de ${current}`;
     }
 
@@ -159,82 +173,84 @@
     function onCellClick(i) {
       if (gameOver || board[i]) return;
       board[i] = current;
+      const cells = document.querySelectorAll('.cell');
+      cells[i].textContent = board[i];
 
       if (checkWinner(board, current)) {
         gameOver = true;
-        info.textContent = `Vencedor: ${current}! ${fraseAleatoria(frasesVitoria)}`;
-        startConfetti(); // 🎊 dispara confete na vitória
+        info.textContent = `🎉 ${current} venceu!`;
+        launchConfetti();
       } else if (board.every(Boolean)) {
         gameOver = true;
-        info.textContent = fraseAleatoria(frasesEmpate);
+        info.textContent = `😐 Empate!`;
       } else {
         current = current === 'X' ? 'O' : 'X';
-        updateInfo();
+        info.textContent = `Vez de ${current}`;
       }
-
-      const cells = document.querySelectorAll('.cell');
-      cells[i].textContent = board[i];
     }
 
     resetBtn.addEventListener('click', () => {
       board = Array(9).fill('');
       current = 'X';
       gameOver = false;
+      info.textContent = '';
       render();
-      stopConfetti();
     });
 
-    // 🎉 Confete animado
-    let confettis = [];
-    function startConfetti() {
-      confettis = Array.from({ length: 150 }, () => ({
-        x: Math.random() * confettiCanvas.width,
-        y: Math.random() * confettiCanvas.height - confettiCanvas.height,
-        r: Math.random() * 6 + 2,
-        d: Math.random() * 10 + 5,
-        color: `hsl(${Math.random() * 360}, 100%, 50%)`,
-        tilt: Math.random() * 10 - 10,
-      }));
-      animateConfetti();
-    }
+    render();
 
-    function stopConfetti() {
-      confettis = [];
-      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    /* ====== 🎆 Confete animado ====== */
+    let confettis = [];
+    function launchConfetti() {
+      const colors = ['#f44336', '#ffeb3b', '#4caf50', '#2196f3', '#9c27b0'];
+      for (let i = 0; i < 300; i++) {
+        confettis.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height - canvas.height,
+          w: Math.random() * 6 + 4,
+          h: Math.random() * 8 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          speed: Math.random() * 5 + 2,
+          angle: Math.random() * 360
+        });
+      }
+      animateConfetti();
+      setTimeout(() => confettis = [], 5000);
     }
 
     function animateConfetti() {
       if (confettis.length === 0) return;
-      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-      confettis.forEach(c => {
-        ctx.beginPath();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      confettis.forEach((c) => {
         ctx.fillStyle = c.color;
-        ctx.fillRect(c.x, c.y, c.r, c.r);
-        ctx.fill();
+        ctx.fillRect(c.x, c.y, c.w, c.h);
+        c.y += c.speed;
+        c.x += Math.sin(c.angle) * 2;
+        if (c.y > canvas.height) c.y = -10;
       });
-      updateConfetti();
       requestAnimationFrame(animateConfetti);
     }
 
-    function updateConfetti() {
-      confettis.forEach(c => {
-        c.y += Math.cos(c.d) + 2;
-        c.x += Math.sin(c.d);
-        if (c.y > confettiCanvas.height) {
-          c.y = 0 - c.r;
-          c.x = Math.random() * confettiCanvas.width;
-        }
-      });
-    }
-
     function resizeCanvas() {
-      confettiCanvas.width = window.innerWidth;
-      confettiCanvas.height = window.innerHeight;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     }
-
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-    render();
+
+    /* ====== 💫 Fundo com bolhas animadas ====== */
+    const bg = document.getElementById('background');
+    for (let i = 0; i < 20; i++) {
+      const bubble = document.createElement('div');
+      bubble.classList.add('bubble');
+      const size = Math.random() * 60 + 20;
+      bubble.style.width = size + 'px';
+      bubble.style.height = size + 'px';
+      bubble.style.left = Math.random() * 100 + '%';
+      bubble.style.animationDuration = (6 + Math.random() * 8) + 's';
+      bubble.style.opacity = Math.random();
+      bg.appendChild(bubble);
+    }
   </script>
 </body>
 </html>
