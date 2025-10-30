@@ -7,62 +7,104 @@
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      background: #f4f4f4;
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      transform: scale(1.25); /* 👈 aumenta o tamanho em 25% */
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #333;
+    }
+
     #board {
       display: grid;
-      grid-template-columns: repeat(3, 100px);
-      grid-gap: 10px;
+      grid-template-columns: repeat(3, 125px); /* aumentado */
+      grid-gap: 12px;
       justify-content: center;
       margin-top: 20px;
     }
+
     .cell {
-      width: 100px;
-      height: 100px;
-      background: white;
-      border: 2px solid #333;
-      font-size: 2rem;
+      width: 125px;
+      height: 125px;
+      background: #fff;
+      border: 3px solid #2196f3;
+      font-size: 2.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      border-radius: 10px;
-      transition: background 0.3s;
+      border-radius: 12px;
+      transition: background 0.3s, transform 0.2s;
     }
+
     .cell:hover {
-      background: #eaeaea;
+      background: #e3f2fd;
+      transform: scale(1.05);
     }
+
     #info {
       margin-top: 20px;
-      font-size: 1.2rem;
+      font-size: 1.3rem;
+      min-height: 1.5em;
+      color: #333;
     }
+
     #reset {
       margin-top: 15px;
-      padding: 10px 20px;
-      background: #007bff;
+      padding: 10px 25px;
+      background: #2196f3;
       color: white;
       border: none;
       border-radius: 8px;
       cursor: pointer;
       font-size: 1rem;
+      transition: background 0.3s;
     }
+
     #reset:hover {
-      background: #0056b3;
+      background: #1976d2;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
     }
   </style>
 </head>
 
 <body>
-  <h1>🎮 Jogo da Velha</h1>
-  <div id="board"></div>
-  <div id="info"></div>
-  <button id="reset">Reiniciar</button>
+  <div class="container">
+    <h1>🎮 Jogo da Velha</h1>
+    <div id="board"></div>
+    <div id="info"></div>
+    <button id="reset">Reiniciar</button>
+  </div>
+  <canvas id="confetti"></canvas>
 
-  <!-- 👇 Coloque o script aqui -->
   <script>
     const boardEl = document.getElementById('board');
     const info = document.getElementById('info');
     const resetBtn = document.getElementById('reset');
+    const confettiCanvas = document.getElementById('confetti');
+    const ctx = confettiCanvas.getContext('2d');
 
     let board = Array(9).fill('');
     const lines = [
@@ -121,6 +163,7 @@
       if (checkWinner(board, current)) {
         gameOver = true;
         info.textContent = `Vencedor: ${current}! ${fraseAleatoria(frasesVitoria)}`;
+        startConfetti(); // 🎊 dispara confete na vitória
       } else if (board.every(Boolean)) {
         gameOver = true;
         info.textContent = fraseAleatoria(frasesEmpate);
@@ -138,8 +181,59 @@
       current = 'X';
       gameOver = false;
       render();
+      stopConfetti();
     });
 
+    // 🎉 Confete animado
+    let confettis = [];
+    function startConfetti() {
+      confettis = Array.from({ length: 150 }, () => ({
+        x: Math.random() * confettiCanvas.width,
+        y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+        r: Math.random() * 6 + 2,
+        d: Math.random() * 10 + 5,
+        color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+        tilt: Math.random() * 10 - 10,
+      }));
+      animateConfetti();
+    }
+
+    function stopConfetti() {
+      confettis = [];
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }
+
+    function animateConfetti() {
+      if (confettis.length === 0) return;
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      confettis.forEach(c => {
+        ctx.beginPath();
+        ctx.fillStyle = c.color;
+        ctx.fillRect(c.x, c.y, c.r, c.r);
+        ctx.fill();
+      });
+      updateConfetti();
+      requestAnimationFrame(animateConfetti);
+    }
+
+    function updateConfetti() {
+      confettis.forEach(c => {
+        c.y += Math.cos(c.d) + 2;
+        c.x += Math.sin(c.d);
+        if (c.y > confettiCanvas.height) {
+          c.y = 0 - c.r;
+          c.x = Math.random() * confettiCanvas.width;
+        }
+      });
+    }
+
+    function resizeCanvas() {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
     render();
   </script>
 </body>
