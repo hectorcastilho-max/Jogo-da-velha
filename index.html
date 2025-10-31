@@ -6,9 +6,9 @@
 <title>Jogo da Velha — Menu & Jogo</title>
 <style>
 :root{
-  --bg1: #ffffff; /* branco */
-  --bg2: #d0e7ff; /* azul claro */
-  --bg3: #a0cfff; /* azul suave */
+  --bg1: #ffffff; 
+  --bg2: #d0e7ff; 
+  --bg3: #a0cfff; 
   --card: rgba(255,255,255,0.08);
   --accent1: #3b82f6;
   --accent2: #60a5fa;
@@ -68,7 +68,7 @@ body::after{
 .start-btn{margin-top:12px;padding:12px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white;font-weight:800;cursor:pointer;font-size:15px}
 
 /* board area */
-.board-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px;}
+.board-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px;display:none;}
 .board {
   width:var(--board-size);height:var(--board-size);
   transform:scale(1.25);
@@ -140,11 +140,10 @@ footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;padd
           </div>
         </div>
         <div style="margin-top:12px"><button class="start-btn" id="startBtn">Começar Jogo</button></div>
-        <div style="margin-top:8px;color:var(--muted);font-size:13px">Dica: X sempre começa. Se escolher O contra a máquina, a máquina iniciará.</div>
       </div>
 
       <!-- Game screen -->
-      <div id="gameScreen" class="menu" style="display:none;" aria-hidden="true">
+      <div id="gameScreen" style="display:none;" aria-hidden="true">
         <div><h1 id="gameTitle">Jogo</h1><div class="subtitle" id="subtitleGame">Divirta-se!</div></div>
         <div style="margin-top:8px">
           <div class="status" id="statusText">Pronto</div>
@@ -156,29 +155,24 @@ footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;padd
           <button id="restartBtn" class="btn-small" title="Reiniciar partida">Reiniciar</button>
           <button id="muteBtn" class="btn-small" title="Mudo/Unmute">Música: On</button>
         </div>
-        <footer style="margin-top:auto">Feito com ❤ — Aproveite!</footer>
       </div>
     </div>
 
     <!-- Board -->
-    <div class="board-wrap">
+    <div class="board-wrap" id="boardWrap">
       <div style="position:relative;">
         <div class="board" id="board" aria-label="Tabuleiro do jogo">
-          <div class="cell" data-index="0" tabindex="0" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="1" tabindex="0" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="2" tabindex="0" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="3" tabindex="0" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="4" tabindex="0" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="5" tabindex="0" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="6" tabindex="0" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="7" tabindex="0" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="8" tabindex="0" role="button" aria-pressed="false"></div>
+          <div class="cell" data-index="0"></div>
+          <div class="cell" data-index="1"></div>
+          <div class="cell" data-index="2"></div>
+          <div class="cell" data-index="3"></div>
+          <div class="cell" data-index="4"></div>
+          <div class="cell" data-index="5"></div>
+          <div class="cell" data-index="6"></div>
+          <div class="cell" data-index="7"></div>
+          <div class="cell" data-index="8"></div>
         </div>
         <div id="line" class="line" style="opacity:0;"></div>
-      </div>
-      <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;">
-        <div class="substatus" id="turnLabel">Vez: —</div>
-        <div style="font-size:13px;color:var(--muted);text-align:center;padding:6px;" id="hintNote">Clique aqui para uma dica rápida.</div>
       </div>
     </div>
   </div>
@@ -190,8 +184,43 @@ footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;padd
 </audio>
 
 <script>
-// ==== SCRIPT JS ====
-// (mesmo script que te enviei antes, mantém IA, menu, restart, confetes, etc.)
+// ==== MENU & MUDANÇA DE TELA ====
+const menuScreen = document.getElementById('menuScreen');
+const gameScreen = document.getElementById('gameScreen');
+const boardWrap = document.getElementById('boardWrap');
+const startBtn = document.getElementById('startBtn');
+const backBtn = document.getElementById('backBtn');
+const bgAudio = document.getElementById('bgAudio');
+
+startBtn.addEventListener('click', ()=>{
+  menuScreen.style.display='none';
+  gameScreen.style.display='flex';
+  boardWrap.style.display='flex';
+  bgAudio.play();
+});
+
+backBtn.addEventListener('click', ()=>{
+  menuScreen.style.display='flex';
+  gameScreen.style.display='none';
+  boardWrap.style.display='none';
+  bgAudio.pause();
+});
+
+// ==== Escolhas do menu ====
+function handleChoices(rowId){
+  const row = document.getElementById(rowId);
+  row.querySelectorAll('.choice').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      row.querySelectorAll('.choice').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+}
+handleChoices('modeRow');
+handleChoices('symRow');
+handleChoices('diffRow');
+
+// ==== Aqui você adicionaria seu script de jogo (IA, confetes, restart, etc.) ====
 </script>
 </body>
 </html>
