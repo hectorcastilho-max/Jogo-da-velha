@@ -3,351 +3,340 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Jogo da Velha — Jogar contra a Máquina</title>
+<title>Jogo da Velha — Menu & Jogo</title>
 <style>
   :root{
-    --bg:#0f1724;
-    --card:#0b1220;
-    --accent1:#7c3aed;
-    --accent2:#06b6d4;
-    --text:#e6eef8;
-    --muted:#9fb0c8;
-    --board-size:360px; /* base size; visually scaled */
+    --bg1:#7c3aed; /* roxo */
+    --bg2:#fb7185; /* rosa */
+    --bg3:#60a5fa; /* azul claro */
+    --card: rgba(255,255,255,0.03);
+    --accent1: #7c3aed;
+    --accent2: #06b6d4;
+    --text:#f4f8ff;
+    --muted: rgba(244,248,255,0.7);
+    --board-size:360px;
+    --glass: rgba(255,255,255,0.04);
   }
   *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
-  html,body{height:100%;margin:0;background:radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.08), transparent 8%),
-               radial-gradient(900px 500px at 90% 90%, rgba(6,182,212,0.06), transparent 12%), var(--bg);
-            color:var(--text);overflow:hidden;}
-  /* floating decorative shapes */
-  .decor {
-    position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;overflow:hidden;
+  html,body{height:100%;margin:0;background:linear-gradient(135deg,var(--bg1),var(--bg2) 45%, var(--bg3));color:var(--text);overflow:hidden;}
+  /* animated gradient shift */
+  body::after{
+    content:"";position:fixed;inset:0;z-index:0;background:linear-gradient(60deg, rgba(255,255,255,0.02), transparent 20%);mix-blend-mode:overlay;pointer-events:none;
+    animation: bgshift 18s linear infinite;
   }
-  .float {
-    position:absolute;border-radius:50%;opacity:0.12;
-    animation: floaty linear infinite;
-    filter: blur(8px);
-  }
-  .float.a{width:260px;height:260px;background:linear-gradient(45deg,#7c3aed,#06b6d4);left:-10%;top:5%;animation-duration:18s;}
-  .float.b{width:200px;height:200px;background:linear-gradient(45deg,#06b6d4,#7c3aed);right:-12%;bottom:5%;animation-duration:22s;}
-  @keyframes floaty{0%{transform:translateY(0) translateX(0)}50%{transform:translateY(-40px) translateX(20px)}100%{transform:translateY(0) translateX(0)}}
+  @keyframes bgshift{0%{transform:rotate(0deg)}50%{transform:rotate(3deg)}100%{transform:rotate(0deg)}}
 
-  .container{
-    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px;
-  }
+  .container{position:relative;z-index:2;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px;}
   .card{
-    width:calc(var(--board-size) + 240px);
-    max-width:95vw;
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
-    border-radius:16px;padding:20px;box-shadow:0 8px 30px rgba(2,6,23,0.7);backdrop-filter: blur(6px);
-    display:grid;grid-template-columns: 1fr 1fr; gap:18px;align-items:start;
+    width:calc(var(--board-size) + 260px);
+    max-width:95vw;background:rgba(255,255,255,0.03);border-radius:16px;padding:18px;box-shadow:0 10px 40px rgba(2,6,23,0.5);
+    display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;backdrop-filter: blur(6px);
   }
 
-  /* Left column: controls + messages */
-  .controls{
-    padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(124,58,237,0.04), rgba(6,182,212,0.02));
-    min-height: calc(var(--board-size) - 40px);
-    display:flex;flex-direction:column;gap:12px;
+  /* MENU area (separate visual screen) */
+  .menu{
+    display:flex;flex-direction:column;gap:12px;padding:12px;
   }
-  h1{margin:0;font-size:20px;letter-spacing:0.2px}
-  .subtitle{color:var(--muted);font-size:13px;margin-top:6px}
-
-  .options {
-    display:flex;flex-direction:column;gap:10px;margin-top:8px;
+  .menu h1{margin:0;font-size:22px}
+  .menu .desc{color:var(--muted);font-size:13px}
+  .choice-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .choice{
+    padding:10px 14px;border-radius:12px;background:var(--glass);border:2px solid transparent;cursor:pointer;font-weight:700;
+    transition:transform .15s, box-shadow .15s;
   }
-  .btn-row{display:flex;gap:8px;flex-wrap:wrap}
-  .option-btn{
-    padding:10px 14px;border-radius:10px;border:2px solid transparent;background:rgba(255,255,255,0.02);
-    color:var(--text);cursor:pointer;font-weight:600;
-    transition:all .18s;
-  }
-  .option-btn:hover{transform:translateY(-3px)}
-  .option-btn.active{border-color:rgba(255,255,255,0.06);box-shadow:0 6px 18px rgba(12,18,30,0.4);}
+  .choice:hover{transform:translateY(-4px)}
+  .choice.active{border-color:rgba(255,255,255,0.06);box-shadow:0 12px 30px rgba(2,6,23,0.35)}
+  .start-btn{margin-top:12px;padding:12px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white;font-weight:800;cursor:pointer;font-size:15px}
 
-  .start-btn{
-    margin-top:8px;padding:12px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent1),var(--accent2));
-    color:white;font-weight:700;cursor:pointer;font-size:15px;
-    box-shadow:0 10px 30px rgba(6,182,212,0.06);
-  }
-
-  .meta {font-size:13px;color:var(--muted);margin-top:auto}
-  .controls .small-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px;border-radius:8px;color:var(--muted);cursor:pointer}
-
-  /* Board column */
-  .board-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;padding:14px;}
+  /* board area */
+  .board-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px;}
   .board {
     width:var(--board-size);height:var(--board-size);
     transform:scale(1.25); /* 25% maior */
     max-width:70vw;max-height:70vw;
     display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:8px;
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008));
     padding:8px;border-radius:14px;
-    box-shadow: 0 10px 30px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+    box-shadow: 0 12px 36px rgba(2,6,23,0.5), inset 0 1px 0 rgba(255,255,255,0.02);
   }
   .cell{
     background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.06));
     border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:800;color:var(--text);
     cursor:pointer;user-select:none;transition:transform .12s, box-shadow .12s;
-    box-shadow: 0 6px 18px rgba(2,6,23,0.4);
+    box-shadow: 0 8px 24px rgba(2,6,23,0.38);
   }
-  .cell:hover{transform:translateY(-6px) scale(1.02)}
+  .cell:hover{transform:translateY(-6px) scale(1.03)}
   .cell.disabled{cursor:default;opacity:0.85}
-  .status{font-size:15px;color:var(--text);font-weight:700}
+  .placed{animation:pop .14s ease;}
+  @keyframes pop{0%{transform:scale(.6)}100%{transform:scale(1)}}
+
+  .controls{padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));min-height: calc(var(--board-size) - 40px);display:flex;flex-direction:column;gap:10px;}
+  .subtitle{color:var(--muted);font-size:13px}
+  .status{font-size:16px;font-weight:700}
   .substatus{font-size:13px;color:var(--muted)}
 
-  .controls-row{display:flex;gap:8px;margin-top:6px}
-  .top-actions{display:flex;gap:8px;align-items:center}
-
-  /* confetti pieces */
-  .confetti-piece{
-    position:fixed;z-index:9999;pointer-events:none;will-change:transform,opacity;
-    width:10px;height:14px;border-radius:2px;opacity:0.95;
-    transform-origin:center;
-    animation: confetti-fall linear forwards;
+  /* small restart button inside game screen */
+  .in-game-actions{display:flex;gap:8px;align-items:center;margin-top:auto}
+  .btn-small{
+    padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text);cursor:pointer;font-weight:700;font-size:13px;
   }
-  @keyframes confetti-fall{
-    0%{transform:translateY(-10vh) rotate(0deg);opacity:1}
-    100%{transform:translateY(110vh) rotate(720deg);opacity:0}
-  }
+  .btn-small.ghost{background:transparent}
+  .btn-small.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));border:none;color:white;box-shadow:0 8px 22px rgba(6,182,212,0.06)}
 
-  /* small footer note */
-  footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;padding-top:8px;}
+  .score{font-size:13px;color:var(--muted);margin-top:4px}
 
-  /* responsive: stack columns on small screens */
+  /* line for winner */
+  .line{position:absolute;pointer-events:none;background:linear-gradient(90deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));height:6px;border-radius:6px;z-index:50;transform-origin:center;opacity:0;transition:opacity .12s}
+
+  /* confetti */
+  .confetti-piece{position:fixed;z-index:9999;pointer-events:none;will-change:transform,opacity;width:10px;height:14px;border-radius:2px;opacity:0.95;transform-origin:center;animation: confetti-fall linear forwards;}
+  @keyframes confetti-fall{0%{transform:translateY(-10vh) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+  footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;padding-top:6px}
+
+  /* small-screen adaptability */
   @media (max-width:900px){
-    .card{grid-template-columns:1fr; width: 92vw;}
+    .card{grid-template-columns:1fr;width:92vw}
     .board{transform:scale(1.05)}
   }
 
-  /* winner highlight line */
-  .line {
-    position:absolute;pointer-events:none;background:linear-gradient(90deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
-    height:6px;border-radius:6px;z-index:50;transform-origin:center;transition:opacity .2s;
-  }
-
-  /* subtle cell place animation */
-  .placed{animation:pop .14s ease;}
-  @keyframes pop{0%{transform:scale(.6)}100%{transform:scale(1)}}
+  /* accessibility focus */
+  .choice:focus, .start-btn:focus, .btn-small:focus, .cell:focus{outline:3px solid rgba(255,255,255,0.06);outline-offset:4px}
 </style>
 </head>
 <body>
-<div class="decor">
-  <div class="float a"></div>
-  <div class="float b"></div>
-</div>
-
 <div class="container">
   <div class="card" role="application" aria-label="Jogo da Velha">
-    <div class="controls">
-      <div>
-        <h1>Jogo da Velha — vs Máquina</h1>
-        <div class="subtitle">Escolha dificuldade e o seu símbolo. A música começa após escolher.</div>
-      </div>
-
-      <div class="options">
-        <div><strong>Dificuldade</strong></div>
-        <div class="btn-row" id="diffRow">
-          <button class="option-btn active" data-diff="easy">Fácil</button>
-          <button class="option-btn" data-diff="medium">Médio</button>
-          <button class="option-btn" data-diff="hard">Difícil</button>
+    <!-- LEFT: menu / controls -->
+    <div class="controls" id="leftPanel">
+      <!-- Menu screen -->
+      <div id="menuScreen" class="menu" aria-hidden="false">
+        <div>
+          <h1>Jogo da Velha</h1>
+          <div class="subtitle">Escolha modo, símbolo e (se vs máquina) a dificuldade. Música começa ao iniciar.</div>
         </div>
 
-        <div style="margin-top:8px"><strong>Seu Símbolo</strong></div>
-        <div class="btn-row" id="symRow">
-          <button class="option-btn active" data-sym="X">X</button>
-          <button class="option-btn" data-sym="O">O</button>
+        <div style="margin-top:8px"><strong>Modo de Jogo</strong></div>
+        <div class="choice-row" id="modeRow">
+          <button class="choice active" data-mode="pvc" aria-pressed="true">🤖 Contra a Máquina</button>
+          <button class="choice" data-mode="pvp" aria-pressed="false">🧑‍🤝‍🧑 2 Jogadores</button>
+        </div>
+
+        <div style="margin-top:12px"><strong>Seu Símbolo</strong></div>
+        <div class="choice-row" id="symRow">
+          <button class="choice active" data-sym="X" aria-pressed="true">X</button>
+          <button class="choice" data-sym="O" aria-pressed="false">O</button>
+        </div>
+
+        <div id="difficultyBlock" style="margin-top:12px">
+          <div><strong>Dificuldade</strong></div>
+          <div class="choice-row" id="diffRow">
+            <button class="choice active" data-diff="easy">Fácil</button>
+            <button class="choice" data-diff="medium">Médio</button>
+            <button class="choice" data-diff="hard">Difícil</button>
+          </div>
         </div>
 
         <div style="margin-top:12px">
           <button class="start-btn" id="startBtn">Começar Jogo</button>
         </div>
 
-        <div class="controls-row" style="margin-top:6px">
-          <button class="controls small-btn" id="restartBtn" title="Reiniciar jogo">Reiniciar</button>
-          <button class="controls small-btn" id="resetOptions" title="Voltar para as opções">Voltar às opções</button>
+        <div style="margin-top:8px;color:var(--muted);font-size:13px">
+          Dica: X sempre começa. Se você escolher O contra a máquina, a máquina (X) iniciará.
         </div>
       </div>
 
-      <div style="margin-top:10px">
-        <div class="status" id="statusText">Pronto para jogar</div>
-        <div class="substatus" id="subStatus">Escolha suas preferências e clique em "Começar Jogo".</div>
-      </div>
+      <!-- Game screen controls (hidden initially) -->
+      <div id="gameScreen" class="menu" style="display:none;" aria-hidden="true">
+        <div>
+          <h1 id="gameTitle">Jogo</h1>
+          <div class="subtitle" id="subtitleGame">Divirta-se!</div>
+        </div>
 
-      <div class="meta">Dificuldades: Fácil (aleatório) • Médio (tenta ganhar/bloquear) • Difícil (Minimax).</div>
-      <footer>Feito com ❤ — Divirta-se!</footer>
+        <div style="margin-top:8px">
+          <div class="status" id="statusText">Pronto</div>
+          <div class="substatus" id="subStatus">Boa sorte!</div>
+          <div class="score" id="scoreLabel">Você 0 • Máquina 0 • Empates 0</div>
+        </div>
+
+        <div class="in-game-actions">
+          <button id="backBtn" class="btn-small ghost" title="Voltar ao menu">← Menu</button>
+          <button id="restartBtn" class="btn-small" title="Reiniciar partida">Reiniciar</button>
+          <button id="muteBtn" class="btn-small" title="Mudo/Unmute">Música: On</button>
+        </div>
+
+        <footer style="margin-top:auto">Feito com ❤ — Aproveite!</footer>
+      </div>
     </div>
 
+    <!-- RIGHT: board -->
     <div class="board-wrap">
       <div style="position:relative;">
         <div class="board" id="board" aria-label="Tabuleiro do jogo">
-          <!-- 9 cells -->
-          <div class="cell" data-index="0" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="1" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="2" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="3" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="4" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="5" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="6" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="7" role="button" aria-pressed="false"></div>
-          <div class="cell" data-index="8" role="button" aria-pressed="false"></div>
+          <div class="cell" data-index="0" tabindex="0" role="button" aria-pressed="false"></div>
+          <div class="cell" data-index="1" tabindex="0" role="button" aria-pressed="false"></div>
+          <div class="cell" data-index="2" tabindex="0" role="button" aria-pressed="false"></div>
+          <div class="cell" data-index="3" tabindex="0" role="button" aria-pressed="false"></div>
+          <div class="cell" data-index="4" tabindex="0" role="button" aria-pressed="false"></div>
+          <div class="cell" data-index="5" tabindex="0" role="button" aria-pressed="false"></div>
+          <div class="cell" data-index="6" tabindex="0" role="button" aria-pressed="false"></div>
+          <div class="cell" data-index="7" tabindex="0" role="button" aria-pressed="false"></div>
+          <div class="cell" data-index="8" tabindex="0" role="button" aria-pressed="false"></div>
         </div>
         <div id="line" class="line" style="opacity:0;"></div>
       </div>
 
       <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;">
-        <div class="top-actions" style="width:100%;justify-content:space-between;">
-          <div>
-            <div class="substatus" id="turnLabel">Jogador: —</div>
-            <div class="substatus" id="scoreLabel">Você 0 • Máquina 0 • Empates 0</div>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <button class="option-btn" id="undoBtn" disabled>Desfazer (não implementado)</button>
-            <button class="option-btn" id="hintBtn">Dica</button>
-          </div>
-        </div>
-
-        <div style="font-size:13px;color:var(--muted);text-align:center;padding:6px;">
-          Toque/click numa casa para jogar. Caso você escolha "O", a máquina começa (X inicia sempre).
-        </div>
+        <div class="substatus" id="turnLabel">Vez: —</div>
+        <div style="font-size:13px;color:var(--muted);text-align:center;padding:6px;" id="hintNote">Informações do jogo aparecerão à esquerda.</div>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- audio: música instrumental (exemplo público) -->
+<!-- audio (instrumental exemplo público) -->
 <audio id="bgAudio" loop crossorigin="anonymous">
   <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
   Seu navegador não suporta áudio.
 </audio>
 
 <script>
-/* =========================
-   Jogo da Velha — lógica e UI
-   ========================= */
+/* ===========
+   Game script
+   =========== */
 
-const startBtn = document.getElementById('startBtn');
+const modeRow = document.getElementById('modeRow');
 const diffRow = document.getElementById('diffRow');
 const symRow = document.getElementById('symRow');
+const difficultyBlock = document.getElementById('difficultyBlock');
+const startBtn = document.getElementById('startBtn');
+const menuScreen = document.getElementById('menuScreen');
+const gameScreen = document.getElementById('gameScreen');
 const boardEl = document.getElementById('board');
 const cells = Array.from(document.querySelectorAll('.cell'));
 const statusText = document.getElementById('statusText');
 const subStatus = document.getElementById('subStatus');
-const turnLabel = document.getElementById('turnLabel');
 const scoreLabel = document.getElementById('scoreLabel');
-const resetOptions = document.getElementById('resetOptions');
+const turnLabel = document.getElementById('turnLabel');
+const backBtn = document.getElementById('backBtn');
 const restartBtn = document.getElementById('restartBtn');
-const hintBtn = document.getElementById('hintBtn');
+const muteBtn = document.getElementById('muteBtn');
 const bgAudio = document.getElementById('bgAudio');
 const lineEl = document.getElementById('line');
+const hintNote = document.getElementById('hintNote');
 
+let mode = 'pvc'; // pvc = player vs computer, pvp = two players
 let difficulty = 'easy';
 let playerSym = 'X';
 let aiSym = 'O';
 let board = Array(9).fill(null);
-let currentTurn = 'X'; // X always starts
+let currentTurn = 'X'; // X starts always
 let running = false;
-let scores = {player:0, ai:0, ties:0};
-let lastMoveIdx = null;
+let scores = {player:0, ai:0, ties:0, p1:0, p2:0};
+let aiEnabled = true;
+let audioOn = true;
 
-/* Escolha de opções UI */
+/* UI interactions for menu */
+modeRow.addEventListener('click', (e)=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  modeRow.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  mode = btn.dataset.mode;
+  // show/hide difficulty depending on mode
+  if(mode === 'pvc') difficultyBlock.style.display = 'block';
+  else difficultyBlock.style.display = 'none';
+});
 diffRow.addEventListener('click', (e)=>{
-  const btn = e.target.closest('button');
-  if(!btn) return;
+  const btn = e.target.closest('button'); if(!btn) return;
   diffRow.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   difficulty = btn.dataset.diff;
 });
 symRow.addEventListener('click', (e)=>{
-  const btn = e.target.closest('button');
-  if(!btn) return;
+  const btn = e.target.closest('button'); if(!btn) return;
   symRow.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   playerSym = btn.dataset.sym;
-  aiSym = playerSym === 'X' ? 'O' : 'X';
 });
 
-/* Start */
+/* Start game: switch to game screen */
 startBtn.addEventListener('click', ()=>{
-  // start music after user gesture
-  try{ bgAudio.currentTime = 0; bgAudio.play().catch(()=>{}); } catch(e){}
-  startGame();
+  // start audio on user gesture
+  try{ bgAudio.currentTime = 0; if(audioOn) bgAudio.play().catch(()=>{}); } catch(e){}
+  // prepare variables
+  aiEnabled = (mode === 'pvc');
+  aiSym = (playerSym === 'X') ? 'O' : 'X';
+  // switch visual screens
+  menuScreen.style.display = 'none';
+  gameScreen.style.display = 'block';
+  menuScreen.setAttribute('aria-hidden','true');
+  gameScreen.setAttribute('aria-hidden','false');
+  // update labels & reset board
+  document.getElementById('gameTitle').textContent = (mode==='pvc') ? 'Você vs Máquina' : '2 Jogadores (local)';
+  document.getElementById('subtitleGame').textContent = (aiEnabled) ? `Dificuldade: ${capitalize(difficulty)}` : 'Modo local — os jogadores se revezam';
+  resetBoard();
+  // If player chose O and AI is enabled, machine (X) starts
+  if(aiEnabled && playerSym === 'O'){
+    setTimeout(aiPlay, 420);
+  }
 });
 
-/* Reset to options (keeps scores) */
-resetOptions.addEventListener('click', ()=>{
+/* Back to menu: stops audio and show menu */
+backBtn.addEventListener('click', ()=>{
+  // stop audio gently
+  try{ bgAudio.pause(); bgAudio.currentTime = 0; } catch(e){}
+  menuScreen.style.display = 'block';
+  gameScreen.style.display = 'none';
+  menuScreen.setAttribute('aria-hidden','false');
+  gameScreen.setAttribute('aria-hidden','true');
   running = false;
-  board = Array(9).fill(null);
-  cells.forEach(c=>{c.textContent='';c.classList.remove('disabled','placed');c.setAttribute('aria-pressed','false')});
-  statusText.textContent = 'Pronto para jogar';
-  subStatus.textContent = 'Escolha as opções e clique em "Começar Jogo".';
-  diffRow.querySelectorAll('button').forEach(b=>b.disabled=false);
-  symRow.querySelectorAll('button').forEach(b=>b.disabled=false);
-  startBtn.disabled = false;
   lineEl.style.opacity = 0;
 });
 
-/* Restart current match (keeps selected options and scores) */
+/* Restart only inside game screen */
 restartBtn.addEventListener('click', ()=>{
   resetBoard();
-  if(running && currentTurn === aiSym) {
-    // se a máquina começa, joga
-    setTimeout(aiPlay, 450);
-  }
+  if(aiEnabled && playerSym === 'O'){ setTimeout(aiPlay,420); }
 });
 
-/* Hint button: show recommended move (simple) */
-hintBtn.addEventListener('click', ()=>{
-  if(!running) return;
-  const move = getBestMoveSimple();
-  if(move!=null){
-    // highlight cell briefly
-    const cel = cells[move];
-    cel.style.boxShadow = '0 18px 40px rgba(124,58,237,0.18)';
-    setTimeout(()=>cel.style.boxShadow = '0 6px 18px rgba(2,6,23,0.4)',900);
-  }
+/* Mute toggle */
+muteBtn.addEventListener('click', ()=>{
+  audioOn = !audioOn;
+  if(audioOn){ try{ bgAudio.play().catch(()=>{}); } catch(e){}; muteBtn.textContent = 'Música: On'; }
+  else { try{ bgAudio.pause(); } catch(e){}; muteBtn.textContent = 'Música: Off'; }
 });
 
-/* Cells click */
+/* Board clicks */
 cells.forEach(cell=>{
   cell.addEventListener('click', ()=>{
     if(!running) return;
     const idx = Number(cell.dataset.index);
-    // only allow human moves on player's symbol turn
     if(board[idx] !== null) return;
-    if(currentTurn !== playerSym) return;
-    makeMove(idx, playerSym);
+    // PvP: alternate players; PvC: only allow human move on player's symbol
+    if(!aiEnabled){
+      makeMove(idx, currentTurn); // local players alternate by currentTurn
+    } else {
+      if(currentTurn !== playerSym) return; // only human when it's their turn
+      makeMove(idx, playerSym);
+    }
+  });
+  // keyboard support: Enter or Space to play
+  cell.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cell.click(); }
   });
 });
 
-/* Start the game (apply options) */
-function startGame(){
-  diffRow.querySelectorAll('button').forEach(b=>b.disabled=true);
-  symRow.querySelectorAll('button').forEach(b=>b.disabled=true);
-  startBtn.disabled = true;
-  running = true;
-  board = Array(9).fill(null);
-  currentTurn = 'X'; // X starts
-  aiSym = (playerSym === 'X') ? 'O' : 'X';
-  updateStatus();
-  cells.forEach(c=>{c.textContent='';c.classList.remove('disabled'); c.classList.remove('placed'); c.setAttribute('aria-pressed','false')});
-  lineEl.style.opacity = 0;
-  // if player chose O, machine (X) starts
-  if(playerSym === 'O'){
-    setTimeout(aiPlay, 450);
-  }
-}
-
-/* Reset board only */
+/* Reset board */
 function resetBoard(){
   board = Array(9).fill(null);
   currentTurn = 'X';
   running = true;
-  cells.forEach(c=>{c.textContent='';c.classList.remove('disabled');c.classList.remove('placed');c.setAttribute('aria-pressed','false')});
+  cells.forEach(c=>{ c.textContent=''; c.classList.remove('disabled','placed'); c.setAttribute('aria-pressed','false'); });
   lineEl.style.opacity = 0;
   updateStatus();
 }
 
-/* Make a move (idx, symbol) */
+/* Make move */
 function makeMove(idx, symbol){
   if(board[idx] !== null) return;
   board[idx] = symbol;
@@ -355,12 +344,8 @@ function makeMove(idx, symbol){
   cel.textContent = symbol;
   cel.classList.add('placed');
   cel.setAttribute('aria-pressed','true');
-  lastMoveIdx = idx;
-  // small sound/visual could be added
-  // check winner
   const winnerInfo = checkWinner(board);
   if(winnerInfo){
-    // winner or tie
     running = false;
     if(winnerInfo.winner){
       announceWin(winnerInfo);
@@ -372,99 +357,86 @@ function makeMove(idx, symbol){
   // switch turn
   currentTurn = (symbol === 'X') ? 'O' : 'X';
   updateStatus();
-  // if next is AI, schedule AI play
-  if(running && currentTurn === aiSym){
-    setTimeout(aiPlay, 450);
+  if(running && aiEnabled && currentTurn === aiSym){
+    setTimeout(aiPlay, 420);
   }
 }
 
-/* AI play depending on difficulty */
+/* AI move logic */
 function aiPlay(){
   if(!running) return;
-  let idx;
-  if(difficulty === 'easy'){
-    idx = getRandomMove();
-  } else if(difficulty === 'medium'){
-    idx = getMediumMove();
-  } else {
-    idx = getBestMoveMinimax(board.slice(), aiSym).idx;
-  }
-  // fallback
+  let idx = null;
+  if(difficulty === 'easy') idx = getRandomMove();
+  else if(difficulty === 'medium') idx = getMediumMove();
+  else idx = getBestMoveMinimax(board.slice(), aiSym).idx;
   if(idx == null) idx = getRandomMove();
   makeMove(idx, aiSym);
 }
 
-/* Random available move */
+/* random move */
 function getRandomMove(){
   const avail = board.map((v,i)=>v===null?i:null).filter(v=>v!==null);
   if(avail.length===0) return null;
   return avail[Math.floor(Math.random()*avail.length)];
 }
 
-/* Medium move: try to win, else block, else center, else random */
+/* medium move: try win, block, center, corner */
 function getMediumMove(){
-  // try win
   for(let i=0;i<9;i++){
     if(board[i]===null){
-      const copy = board.slice(); copy[i]=aiSym;
-      if(checkWinner(copy)?.winner === aiSym) return i;
+      const c = board.slice(); c[i]=aiSym;
+      if(checkWinner(c)?.winner === aiSym) return i;
     }
   }
-  // try block player
   for(let i=0;i<9;i++){
     if(board[i]===null){
-      const copy = board.slice(); copy[i]=playerSym;
-      if(checkWinner(copy)?.winner === playerSym) return i;
+      const c = board.slice(); c[i]=playerSym;
+      if(checkWinner(c)?.winner === playerSym) return i;
     }
   }
-  // center
   if(board[4]===null) return 4;
-  // opposite corner tactic (simple)
   const corners = [0,2,6,8].filter(i=>board[i]===null);
   if(corners.length) return corners[Math.floor(Math.random()*corners.length)];
   return getRandomMove();
 }
 
-/* Simple hint: use medium logic */
-function getBestMoveSimple(){
-  if(difficulty === 'easy') return getRandomMove();
-  if(difficulty === 'medium') return getMediumMove();
-  return getBestMoveMinimax(board.slice(), aiSym).idx;
-}
-
-/* Minimax algorithm for 'hard' difficulty */
+/* Minimax (hard) */
 function getBestMoveMinimax(newBoard, maximizingSymbol){
-  // returns {idx,score}
-  const avail = newBoard.map((v,i)=>v===null?i:null).filter(v=>v!==null);
-  const winnerCheck = checkWinner(newBoard);
-  if(winnerCheck){
-    if(winnerCheck.winner === aiSym) return {score: 10};
-    if(winnerCheck.winner === playerSym) return {score: -10};
-    if(winnerCheck.winner === null) return {score: 0};
+  const winnerInfo = checkWinner(newBoard);
+  if(winnerInfo){
+    if(winnerInfo.winner === aiSym) return {idx:null, score:10};
+    if(winnerInfo.winner === playerSym) return {idx:null, score:-10};
+    if(winnerInfo.winner === null) return {idx:null, score:0};
   }
+  const avail = newBoard.map((v,i)=>v===null?i:null).filter(v=>v!==null);
+  if(avail.length === 0) return {idx:null, score:0};
 
-  const isMaximizing = (maximizingSymbol === aiSym);
-  let bestMove = {idx:null, score: isMaximizing ? -Infinity : Infinity};
-
-  for(const i of avail){
-    newBoard[i] = isMaximizing ? aiSym : playerSym;
-    const result = getBestMoveMinimax(newBoard, isMaximizing ? playerSym : aiSym);
-    newBoard[i] = null;
-    const score = result.score;
-    if(isMaximizing){
-      if(score > bestMove.score){
-        bestMove = {idx:i, score};
-      }
-    } else {
-      if(score < bestMove.score){
-        bestMove = {idx:i, score};
+  function recurse(bd, maximizing){
+    const chk = checkWinner(bd);
+    if(chk){
+      if(chk.winner === aiSym) return {score:10};
+      if(chk.winner === playerSym) return {score:-10};
+      return {score:0};
+    }
+    const moves = bd.map((v,i)=>v===null?i:null).filter(v=>v!==null);
+    let best = maximizing ? {score:-Infinity} : {score:Infinity};
+    for(const m of moves){
+      bd[m] = maximizing ? aiSym : playerSym;
+      const res = recurse(bd, !maximizing);
+      bd[m] = null;
+      const sc = res.score;
+      if(maximizing){
+        if(sc > best.score) best = {idx:m, score:sc};
+      } else {
+        if(sc < best.score) best = {idx:m, score:sc};
       }
     }
+    return best;
   }
-  return bestMove;
+  return recurse(newBoard.slice(), true);
 }
 
-/* Winner check function: returns {winner, line} or null for not finished */
+/* Check winner */
 function checkWinner(bd){
   const lines = [
     [0,1,2],[3,4,5],[6,7,8],
@@ -473,36 +445,28 @@ function checkWinner(bd){
   ];
   for(const L of lines){
     const [a,b,c] = L;
-    if(bd[a] && bd[a] === bd[b] && bd[a] === bd[c]){
-      return {winner: bd[a], line: L};
-    }
+    if(bd[a] && bd[a] === bd[b] && bd[a] === bd[c]) return {winner: bd[a], line: L};
   }
-  // tie?
-  if(bd.every(c=>c!==null)){
-    return {winner: null, line: null};
-  }
+  if(bd.every(c=>c!==null)) return {winner: null, line: null};
   return null;
 }
 
 /* Announce win */
 function announceWin(info){
   const winner = info.winner;
-  // disable clicks
+  // disable further clicks
   running = false;
-  // visually disable remaining cells
   cells.forEach(c=>c.classList.add('disabled'));
-  // highlight winning line
   showWinningLine(info.line);
-  if(winner === playerSym){
-    statusText.textContent = 'Você venceu! 🎉';
-    scores.player++;
-    // confetti
-    launchConfetti();
+  if(aiEnabled){
+    if(winner === playerSym){ statusText.textContent = 'Você venceu! 🎉'; scores.player++; launchConfetti(); }
+    else { statusText.textContent = 'Máquina venceu.'; scores.ai++; }
   } else {
-    statusText.textContent = 'Máquina venceu.';
-    scores.ai++;
+    // PvP: determine player 1/2 by symbol: X = jogador1, O = jogador2
+    if(winner === 'X'){ statusText.textContent = 'Jogador X venceu! 🎉'; scores.p1++; }
+    else { statusText.textContent = 'Jogador O venceu! 🎉'; scores.p2++; }
   }
-  subStatus.textContent = `Resultado: ${winner}`;
+  subStatus.textContent = `Vencedor: ${winner}`;
   updateScoreLabel();
 }
 
@@ -511,30 +475,29 @@ function announceTie(){
   running = false;
   statusText.textContent = 'Empate!';
   subStatus.textContent = 'Ninguém venceu.';
-  scores.ties++;
+  scores.ties = (scores.ties || 0) + 1;
   updateScoreLabel();
 }
 
-/* Update labels */
+/* Update UI labels */
 function updateStatus(){
   turnLabel.textContent = running ? `Vez: ${currentTurn}` : 'Jogo parado';
-  statusText.textContent = running ? `Jogue seu turno (${playerSym})` : statusText.textContent;
-  subStatus.textContent = running ? `Dificuldade: ${capitalize(difficulty)}` : subStatus.textContent;
+  statusText.textContent = running ? (aiEnabled ? `Sua vez (${playerSym})` : `Vez do jogador ${currentTurn}`) : statusText.textContent;
+  subStatus.textContent = running ? (aiEnabled ? `Dificuldade: ${capitalize(difficulty)}` : 'Modo local') : subStatus.textContent;
   updateScoreLabel();
 }
 function updateScoreLabel(){
-  scoreLabel.textContent = `Você ${scores.player} • Máquina ${scores.ai} • Empates ${scores.ties}`;
+  if(aiEnabled) scoreLabel.textContent = `Você ${scores.player || 0} • Máquina ${scores.ai || 0} • Empates ${scores.ties || 0}`;
+  else scoreLabel.textContent = `X ${scores.p1 || 0} • O ${scores.p2 || 0} • Empates ${scores.ties || 0}`;
 }
 function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
 
-/* Show a line across the winning 3 */
+/* show line */
 function showWinningLine(line){
   if(!line) return;
-  // compute positions of the three cells
   const first = cells[line[0]].getBoundingClientRect();
   const last = cells[line[2]].getBoundingClientRect();
   const parent = boardEl.getBoundingClientRect();
-  // center positions relative to board
   const x1 = first.left + first.width/2 - parent.left;
   const y1 = first.top + first.height/2 - parent.top;
   const x2 = last.left + last.width/2 - parent.left;
@@ -548,93 +511,57 @@ function showWinningLine(line){
   lineEl.style.opacity = 1;
 }
 
-/* Confetti (simple) */
+/* confetti */
 function launchConfetti(){
   const colors = ['#f97316','#fb7185','#60a5fa','#34d399','#facc15','#a78bfa'];
-  const num = 90;
+  const num = 80;
   for(let i=0;i<num;i++){
     const el = document.createElement('div');
     el.className = 'confetti-piece';
-    const w = 8 + Math.random()*12;
+    const w = 7 + Math.random()*12;
     const h = 10 + Math.random()*18;
     el.style.width = w+'px';
     el.style.height = h+'px';
-    el.style.left = Math.random()*100 + 'vw';
+    el.style.left = (20 + Math.random()*60) + 'vw';
     el.style.top = ( -5 - Math.random()*10) + 'vh';
     el.style.background = colors[Math.floor(Math.random()*colors.length)];
     el.style.transform = `rotate(${Math.random()*360}deg)`;
     el.style.animationDuration = (2 + Math.random()*2.2) + 's';
-    el.style.opacity = 0.95;
     document.body.appendChild(el);
-    // remove after animation
-    setTimeout(()=>el.remove(), 4000 + Math.random()*1000);
+    setTimeout(()=>el.remove(), 4200 + Math.random()*1000);
   }
 }
 
-/* Utility: return best move (minimax wrapper) */
-function getBestMoveMinimax(boardState, forPlayer){
-  // wrapper that runs minimax with alpha-beta? (simple version)
-  // Here we will implement a depth-limited minimax returning idx+score.
-  // We'll use the algorithm similar to the recursive function above, but improved to return idx when top-level.
-  const winnerInfo = checkWinner(boardState);
-  if(winnerInfo) {
-    if(winnerInfo.winner === aiSym) return {idx:null, score:10};
-    if(winnerInfo.winner === playerSym) return {idx:null, score:-10};
-    if(winnerInfo.winner === null) return {idx:null, score:0};
+/* quick hint support (click middle text to show a hint) */
+hintNote.addEventListener('click', ()=>{
+  if(!running) return;
+  let move = null;
+  if(!aiEnabled) return;
+  if(difficulty === 'easy') move = getRandomMove();
+  else if(difficulty === 'medium') move = getMediumMove();
+  else move = getBestMoveMinimax(board.slice(), aiSym).idx;
+  if(move!=null){
+    const cel = cells[move];
+    const prev = cel.style.boxShadow;
+    cel.style.boxShadow = '0 26px 60px rgba(124,58,237,0.18)';
+    setTimeout(()=>cel.style.boxShadow = prev || '0 8px 24px rgba(2,6,23,0.38)',900);
   }
-
-  const available = boardState.map((v,i)=>v===null?i:null).filter(v=>v!==null);
-  // if only one move left
-  if(available.length === 1) return {idx: available[0], score:0};
-
-  // recursion
-  function recurse(bd, maximizing){
-    const check = checkWinner(bd);
-    if(check){
-      if(check.winner === aiSym) return {score:10};
-      if(check.winner === playerSym) return {score:-10};
-      return {score:0};
-    }
-    const moves = bd.map((v,i)=>v===null?i:null).filter(v=>v!==null);
-    let best = maximizing ? {score:-Infinity} : {score:Infinity};
-    for(const m of moves){
-      bd[m] = maximizing ? aiSym : playerSym;
-      const res = recurse(bd, !maximizing);
-      bd[m] = null;
-      const sc = res.score;
-      if(maximizing){
-        if(sc > best.score){ best = {idx:m, score:sc}; }
-      } else {
-        if(sc < best.score){ best = {idx:m, score:sc}; }
-      }
-    }
-    return best;
-  }
-  const top = recurse(boardState.slice(), true);
-  return top;
-}
-
-/* ----- small UX polish: animate the start button pulse ----- */
-(function pulseStart(){
-  startBtn.animate([{transform:'translateY(0)'},{transform:'translateY(-4px)'}],{duration:1200,iterations:Infinity,direction:'alternate'});
-})();
-
-/* allow clicking Enter to start */
-document.addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter') startBtn.click();
 });
 
-/* safety: if user navigates away, pause audio */
+/* keyboard start */
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' && menuScreen.style.display !== 'none') startBtn.click();
+});
+
+/* pause audio when leaving tab */
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden) try{ bgAudio.pause(); } catch(e){}
 });
 
-/* PREVENT: undo not implemented — just placeholder */
-// (optionally could implement move stack)
-
-/* Quick initial call to set labels */
+/* init */
 updateStatus();
 
+/* End of script */
 </script>
 </body>
 </html>
