@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xadrez Moderno</title>
+<style>
+:root {
+  --light:#f0d9b5;
+  --dark:#b58863;
+  --accent:#3b82f6;
+  --white:#fff;
+  --black:#222;
+  --board-size:480px;
+}
+body {
+  margin:0;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  font-family:Inter, sans-serif;
+  background: linear-gradient(135deg,#e3f2fd,#bbdefb);
+}
+h1 {margin-bottom:12px; color:#1f2937;}
+#board {display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); width:var(--board-size); height:var(--board-size); box-shadow:0 8px 24px rgba(0,0,0,0.2);}
+.cell {width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:32px; cursor:pointer; user-select:none; transition:0.1s; position:relative;}
+.cell.light {background: var(--light);}
+.cell.dark {background: var(--dark);}
+.piece {font-size:32px; user-select:none; transition:0.1s;}
+.controls {margin-top:12px; display:flex; gap:10px;}
+button {padding:8px 12px; border:none; border-radius:10px; cursor:pointer; font-weight:600; transition:0.2s;}
+button:hover {transform:translateY(-2px);}
+.btn-primary {background:linear-gradient(90deg,var(--accent),#60a5fa); color:white;}
+#status {margin-top:8px; font-weight:600;}
+</style>
+</head>
+<body>
+
+<h1>Xadrez Moderno</h1>
+<div id="board"></div>
+<div id="status">Turno: Branco</div>
+<div class="controls">
+  <button id="restartBtn" class="btn-primary">Reiniciar</button>
+  <button id="backBtn">← Menu</button>
+  <button id="muteBtn">Música: On</button>
+</div>
+
+<audio id="bgAudio" loop autoplay>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_0f3a7f3b6b.mp3?filename=soft-instrumental-110596.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+// ==== TABULEIRO ====
+const board = document.getElementById('board');
+const status = document.getElementById('status');
+const restartBtn = document.getElementById('restartBtn');
+const backBtn = document.getElementById('backBtn');
+const muteBtn = document.getElementById('muteBtn');
+const bgAudio = document.getElementById('bgAudio');
+
+const initialSetup = [
+  ["♖","♘","♗","♕","♔","♗","♘","♖"],
+  ["♙","♙","♙","♙","♙","♙","♙","♙"],
+  ["","","","","","","",""],
+  ["","","","","","","",""],
+  ["","","","","","","",""],
+  ["","","","","","","",""],
+  ["♟","♟","♟","♟","♟","♟","♟","♟"],
+  ["♜","♞","♝","♛","♚","♝","♞","♜"]
+];
+let boardState=[];
+let selected=null;
+let currentPlayer='white';
+
+function createBoard(){
+  board.innerHTML='';
+  boardState = [];
+  for(let r=0;r<8;r++){
+    let rowArr=[];
+    for(let c=0;c<8;c++){
+      const cell=document.createElement('div');
+      cell.classList.add('cell',(r+c)%2?'dark':'light');
+      cell.dataset.row=r; cell.dataset.col=c;
+      cell.textContent=initialSetup[r][c];
+      board.appendChild(cell);
+      rowArr.push(initialSetup[r][c]);
+    }
+    boardState.push(rowArr);
+  }
+}
+createBoard();
+
+// ==== MOVIMENTO SIMPLES ====
+board.addEventListener('click', e=>{
+  const cell = e.target.closest('.cell');
+  if(!cell) return;
+  const r=parseInt(cell.dataset.row);
+  const c=parseInt(cell.dataset.col);
+  const piece = boardState[r][c];
+
+  if(selected){
+    // mover
+    boardState[r][c]=boardState[selected.r][selected.c];
+    boardState[selected.r][selected.c]='';
+    selected=null;
+    renderBoard();
+    currentPlayer = currentPlayer==='white'?'black':'white';
+    status.textContent=`Turno: ${currentPlayer==='white'?'Branco':'Preto'}`;
+  } else {
+    if(piece!==''){
+      selected={r,c};
+    }
+  }
+});
+
+function renderBoard(){
+  board.querySelectorAll('.cell').forEach(cell=>{
+    const r=parseInt(cell.dataset.row);
+    const c=parseInt(cell.dataset.col);
+    cell.textContent=boardState[r][c];
+  });
+}
+
+// ==== BOTÕES ====
+restartBtn.addEventListener('click', ()=>{createBoard(); currentPlayer='white'; status.textContent='Turno: Branco';});
+backBtn.addEventListener('click', ()=>{window.open('index.html','_self');});
+muteBtn.addEventListener('click', ()=>{
+  if(bgAudio.paused){bgAudio.play(); muteBtn.textContent='Música: On';}
+  else{bgAudio.pause(); muteBtn.textContent='Música: Off';}
+});
+</script>
+</body>
+</html>
