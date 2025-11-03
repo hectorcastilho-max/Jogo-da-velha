@@ -3,571 +3,127 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Jogo da Velha — Menu & Jogo</title>
+<title>Hub de Jogos 🎮</title>
 <style>
 :root{
-  --bg1: #ffffff; 
-  --bg2: #d0e7ff; 
-  --bg3: #a0cfff; 
-  --card: rgba(255,255,255,0.08);
-  --accent1: #3b82f6;
-  --accent2: #60a5fa;
-  --text: #1f2937;
-  --muted: rgba(31,41,55,0.7);
-  --board-size: 360px;
-  --glass: rgba(255,255,255,0.04);
+  --bg1:#ffffff; 
+  --bg2:#d0e7ff; 
+  --bg3:#a0cfff; 
+  --glass:rgba(255,255,255,0.05);
+  --accent1:#3b82f6;
+  --accent2:#60a5fa;
+  --text:#1f2937;
+  --muted:rgba(31,41,55,0.7);
 }
 *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
-html,body{height:100%;margin:0;color:var(--text);overflow:hidden;}
+html,body{height:100%;margin:0;overflow:hidden;color:var(--text);}
 body{
-  background: linear-gradient(135deg, var(--bg1), var(--bg2) 45%, var(--bg3));
-  transition: background 2s ease-in-out;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2) 45%,var(--bg3));
+  display:flex;align-items:center;justify-content:center;
+  transition:background 2s ease-in-out;
   position:relative;
 }
-
-/* Fundo animado leve */
 body::after{
   content:"";
-  position:fixed; inset:0; z-index:0;
-  background: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.2), transparent 80%),
-              radial-gradient(circle at 70% 80%, rgba(96,207,255,0.15), transparent 70%);
-  mix-blend-mode: overlay;
-  pointer-events:none;
-  animation: bgShiftLight 15s linear infinite;
+  position:fixed;inset:0;z-index:0;
+  background:radial-gradient(circle at 25% 35%,rgba(255,255,255,0.2),transparent 80%),
+              radial-gradient(circle at 75% 75%,rgba(96,207,255,0.15),transparent 70%);
+  mix-blend-mode:overlay;
+  animation:bgShift 15s linear infinite;
 }
-
-@keyframes bgShiftLight{
-  0% { transform: translate(0px,0px) rotate(0deg); }
-  50% { transform: translate(15px,10px) rotate(2deg); }
-  100% { transform: translate(0px,0px) rotate(0deg); }
+@keyframes bgShift{
+  0%{transform:translate(0,0)}
+  50%{transform:translate(15px,10px)}
+  100%{transform:translate(0,0)}
 }
-
-.container{position:relative;z-index:2;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px;}
 .card{
-  width:calc(var(--board-size) + 260px);
-  max-width:95vw;
-  background:var(--card);
-  border-radius:16px;padding:18px;
-  box-shadow:0 10px 40px rgba(2,6,23,0.3);
-  display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;backdrop-filter: blur(6px);
+  z-index:1;
+  background:var(--glass);
+  backdrop-filter:blur(8px);
+  border-radius:20px;
+  box-shadow:0 15px 40px rgba(2,6,23,0.3);
+  width:340px;
+  padding:30px 24px;
+  text-align:center;
 }
-
-/* MENU area */
-.menu{
-  display:flex;flex-direction:column;gap:12px;padding:12px;
+h1{margin:0;font-size:28px}
+.subtitle{color:var(--muted);font-size:13px;margin-top:6px;margin-bottom:18px}
+.btn{
+  display:block;width:100%;
+  padding:14px;border:none;border-radius:14px;
+  background:linear-gradient(90deg,var(--accent1),var(--accent2));
+  color:white;font-weight:700;font-size:16px;
+  margin:10px 0;cursor:pointer;
+  transition:transform .15s, box-shadow .15s, background .2s;
 }
-.menu h1{margin:0;font-size:22px}
-.menu .desc{color:var(--muted);font-size:13px}
-.choice-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
-.choice{
-  padding:10px 14px;border-radius:12px;background:var(--glass);border:2px solid transparent;cursor:pointer;font-weight:700;
-  transition:transform .15s, box-shadow .15s;
+.btn:hover{transform:translateY(-4px);box-shadow:0 10px 25px rgba(6,182,212,0.2);}
+.btn:active{transform:scale(0.97);}
+footer{margin-top:20px;font-size:12px;color:var(--muted);}
+.mute-btn{
+  margin-top:12px;
+  background:transparent;
+  border:1px solid rgba(31,41,55,0.15);
+  color:var(--text);
+  padding:8px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+  transition:background .2s;
 }
-.choice:hover{transform:translateY(-4px)}
-.choice.active{border-color:rgba(31,41,55,0.15);box-shadow:0 12px 30px rgba(2,6,23,0.18)}
-.start-btn{margin-top:12px;padding:12px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white;font-weight:800;cursor:pointer;font-size:15px}
-
-/* board area */
-.board-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px;display:none;}
-.board {
-  width:var(--board-size);height:var(--board-size);
-  transform:scale(1.25);
-  max-width:70vw;max-height:70vw;
-  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:8px;
-  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.008));
-  padding:8px;border-radius:14px;
-  box-shadow: 0 12px 36px rgba(2,6,23,0.15), inset 0 1px 0 rgba(255,255,255,0.02);
-}
-.cell{
-  background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.02));
-  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:800;color:var(--text);
-  cursor:pointer;user-select:none;transition:transform .12s, box-shadow .12s;
-  box-shadow: 0 8px 24px rgba(2,6,23,0.12);
-}
-.cell:hover{transform:translateY(-6px) scale(1.03)}
-.cell.disabled{cursor:default;opacity:0.85}
-.placed{animation:pop .14s ease;}
-@keyframes pop{0%{transform:scale(.6)}100%{transform:scale(1)}}
-
-.controls{padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));min-height: calc(var(--board-size) - 40px);display:flex;flex-direction:column;gap:10px;}
-.subtitle{color:var(--muted);font-size:13px}
-.status{font-size:16px;font-weight:700}
-.substatus{font-size:13px;color:var(--muted)}
-
-.in-game-actions{display:flex;gap:8px;align-items:center;margin-top:auto}
-.btn-small{
-  padding:8px 10px;border-radius:10px;border:1px solid rgba(31,41,55,0.1);background:transparent;color:var(--text);cursor:pointer;font-weight:700;font-size:13px;
-}
-.btn-small.ghost{background:transparent}
-.btn-small.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));border:none;color:white;box-shadow:0 8px 22px rgba(6,182,212,0.06)}
-
-.score{font-size:13px;color:var(--muted);margin-top:4px}
-.line{position:absolute;pointer-events:none;background:linear-gradient(90deg, rgba(31,41,55,0.12), rgba(31,41,55,0.06));height:6px;border-radius:6px;z-index:50;transform-origin:center;opacity:0;transition:opacity .12s}
-.confetti-piece{position:fixed;z-index:9999;pointer-events:none;will-change:transform,opacity;width:10px;height:14px;border-radius:2px;opacity:0.95;transform-origin:center;animation: confetti-fall linear forwards;}
-@keyframes confetti-fall{0%{transform:translateY(-10vh) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
-
-footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;padding-top:6px}
-@media (max-width:900px){
-  .card{grid-template-columns:1fr;width:92vw}
-  .board{transform:scale(1.05)}
-}
-.choice:focus, .start-btn:focus, .btn-small:focus, .cell:focus{outline:3px solid rgba(31,41,55,0.12);outline-offset:4px}
+.mute-btn:hover{background:rgba(31,41,55,0.05)}
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="card" role="application" aria-label="Jogo da Velha">
-    <div class="controls" id="leftPanel">
-      <!-- Menu screen -->
-      <div id="menuScreen" class="menu" aria-hidden="false">
-        <div><h1>Jogo da Velha</h1><div class="subtitle">Escolha modo, símbolo e dificuldade. Música inicia ao começar.</div></div>
-        <div style="margin-top:8px"><strong>Modo de Jogo</strong></div>
-        <div class="choice-row" id="modeRow">
-          <button class="choice active" data-mode="pvc" aria-pressed="true">🤖 Contra a Máquina</button>
-          <button class="choice" data-mode="pvp" aria-pressed="false">🧑‍🤝‍🧑 2 Jogadores</button>
-        </div>
-        <div style="margin-top:12px"><strong>Seu Símbolo</strong></div>
-        <div class="choice-row" id="symRow">
-          <button class="choice active" data-sym="X" aria-pressed="true">X</button>
-          <button class="choice" data-sym="O" aria-pressed="false">O</button>
-        </div>
-        <div id="difficultyBlock" style="margin-top:12px">
-          <div><strong>Dificuldade</strong></div>
-          <div class="choice-row" id="diffRow">
-            <button class="choice active" data-diff="easy">Fácil</button>
-            <button class="choice" data-diff="medium">Médio</button>
-            <button class="choice" data-diff="hard">Difícil</button>
-          </div>
-        </div>
-        <div style="margin-top:12px"><button class="start-btn" id="startBtn">Começar Jogo</button></div>
-      </div>
+<div class="card">
+  <h1>🎮 Hub de Jogos</h1>
+  <div class="subtitle">Escolha um jogo para começar</div>
 
-      <!-- Game screen -->
-      <div id="gameScreen" style="display:none;" aria-hidden="true">
-        <div><h1 id="gameTitle">Jogo</h1><div class="subtitle" id="subtitleGame">Divirta-se!</div></div>
-        <div style="margin-top:8px">
-          <div class="status" id="statusText">Pronto</div>
-          <div class="substatus" id="subStatus">Boa sorte!</div>
-          <div class="score" id="scoreLabel">Você 0 • Máquina 0 • Empates 0</div>
-        </div>
-        <div class="in-game-actions">
-          <button id="backBtn" class="btn-small ghost" title="Voltar ao menu">← Menu</button>
-          <button id="restartBtn" class="btn-small" title="Reiniciar partida">Reiniciar</button>
-          <button id="muteBtn" class="btn-small" title="Mudo/Unmute">Música: On</button>
-        </div>
-      </div>
-    </div>
+  <button class="btn" data-link="velha.html">🧩 Jogo da Velha</button>
+  <button class="btn" data-link="damas.html">♟️ Damas</button>
+  <button class="btn" data-link="xadrez.html">♚ Xadrez</button>
+  <button class="btn" data-link="paciencia.html">🃏 Paciência</button>
 
-    <!-- Board -->
-    <div class="board-wrap" id="boardWrap">
-      <div style="position:relative;">
-        <div class="board" id="board" aria-label="Tabuleiro do jogo">
-          <div class="cell" tabindex="0" data-index="0"></div>
-          <div class="cell" tabindex="0" data-index="1"></div>
-          <div class="cell" tabindex="0" data-index="2"></div>
-          <div class="cell" tabindex="0" data-index="3"></div>
-          <div class="cell" tabindex="0" data-index="4"></div>
-          <div class="cell" tabindex="0" data-index="5"></div>
-          <div class="cell" tabindex="0" data-index="6"></div>
-          <div class="cell" tabindex="0" data-index="7"></div>
-          <div class="cell" tabindex="0" data-index="8"></div>
-        </div>
-        <div id="line" class="line" style="opacity:0;"></div>
-      </div>
-    </div>
-  </div>
+  <button class="mute-btn" id="muteBtn">Música: On</button>
+
+  <footer>© 2025 — Seu Arcade Pessoal</footer>
 </div>
 
-<audio id="bgAudio" loop crossorigin="anonymous">
-  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-  Seu navegador não suporta áudio.
+<audio id="bgAudio" loop autoplay>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_9e4a2f74d3.mp3?filename=calm-lofi-ambient-110590.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="hoverSound">
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_7b2d90a43a.mp3?filename=soft-click-112002.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="clickSound">
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_ef6d3df37a.mp3?filename=ui-click-112008.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-// ----------------------------
-// Variáveis e seleção DOM
-// ----------------------------
-const menuScreen = document.getElementById('menuScreen');
-const gameScreen = document.getElementById('gameScreen');
-const boardWrap = document.getElementById('boardWrap');
-const startBtn = document.getElementById('startBtn');
-const backBtn = document.getElementById('backBtn');
 const bgAudio = document.getElementById('bgAudio');
-const modeRow = document.getElementById('modeRow');
-const symRow = document.getElementById('symRow');
-const diffRow = document.getElementById('diffRow');
-const board = document.getElementById('board');
-const cells = Array.from(document.querySelectorAll('.cell'));
-const statusText = document.getElementById('statusText');
-const subStatus = document.getElementById('subStatus');
-const scoreLabel = document.getElementById('scoreLabel');
-const restartBtn = document.getElementById('restartBtn');
 const muteBtn = document.getElementById('muteBtn');
-const lineEl = document.getElementById('line');
+const hoverSound = document.getElementById('hoverSound');
+const clickSound = document.getElementById('clickSound');
 
-let gameMode = 'pvc';
-let playerSym = 'X';
-let aiSym = 'O';
-let difficulty = 'easy';
-
-let boardState = Array(9).fill(null); // 'X' | 'O' | null
-let currentPlayer = 'X'; // who's turn it is
-let running = false;
-let scores = { player:0, ai:0, draws:0 };
-
-// winning combos
-const WIN_COMBOS = [
-  [0,1,2],[3,4,5],[6,7,8], // rows
-  [0,3,6],[1,4,7],[2,5,8], // cols
-  [0,4,8],[2,4,6] // diags
-];
-
-// ----------------------------
-// Helpers UI: choices
-// ----------------------------
-function setupChoiceRow(rowElement, onChange) {
-  rowElement.querySelectorAll('.choice').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      rowElement.querySelectorAll('.choice').forEach(b=>{ b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
-      btn.classList.add('active'); btn.setAttribute('aria-pressed','true');
-      onChange && onChange(btn.dataset);
-    });
+document.querySelectorAll('.btn').forEach(btn=>{
+  btn.addEventListener('mouseenter', ()=> hoverSound.play());
+  btn.addEventListener('click', ()=>{
+    clickSound.play();
+    const link = btn.getAttribute('data-link');
+    window.open(link,'_blank');
   });
-}
-setupChoiceRow(modeRow, (d)=>{ gameMode = d.mode; document.getElementById('difficultyBlock').style.display = gameMode === 'pvc' ? 'block' : 'none'; });
-setupChoiceRow(symRow, (d)=>{ playerSym = d.sym; aiSym = (playerSym === 'X') ? 'O' : 'X'; });
-setupChoiceRow(diffRow, (d)=>{ difficulty = d.diff; });
-
-// ----------------------------
-// Start / Back
-// ----------------------------
-startBtn.addEventListener('click', ()=>{
-  menuScreen.style.display='none';
-  gameScreen.style.display='flex';
-  boardWrap.style.display='flex';
-  // start audio - browsers allow play after user gesture (click)
-  bgAudio.play().catch(()=>{ /* se não puder tocar, sem problemas */ });
-  startNewMatch();
 });
 
-backBtn.addEventListener('click', ()=>{
-  menuScreen.style.display='flex';
-  gameScreen.style.display='none';
-  boardWrap.style.display='none';
-  bgAudio.pause();
-});
-
-// mute toggle
-let muted = false;
 muteBtn.addEventListener('click', ()=>{
-  muted = !muted;
-  if(muted){ bgAudio.pause(); muteBtn.textContent = 'Música: Off'; }
-  else { bgAudio.play().catch(()=>{}); muteBtn.textContent = 'Música: On'; }
+  if(bgAudio.paused){
+    bgAudio.play();
+    muteBtn.textContent = 'Música: On';
+  } else {
+    bgAudio.pause();
+    muteBtn.textContent = 'Música: Off';
+  }
 });
-
-// reiniciar apenas a partida atual (não zera placar)
-restartBtn.addEventListener('click', startNewMatch);
-
-// ----------------------------
-// Game core
-// ----------------------------
-function startNewMatch(){
-  boardState = Array(9).fill(null);
-  cells.forEach(c=>{
-    c.textContent = ''; c.classList.remove('placed','disabled');
-    c.removeAttribute('aria-label');
-  });
-  lineEl.style.opacity = 0;
-  running = true;
-  // set who starts: X starts traditionally
-  currentPlayer = 'X';
-  updateStatus();
-  // if AI is X and PVC, AI plays first
-  if(gameMode === 'pvc' && currentPlayer === aiSym){
-    // small delay for UX
-    setTimeout(()=> aiMove(), 220);
-  }
-}
-
-function updateStatus(){
-  if(!running) return;
-  if(gameMode === 'pvp'){
-    statusText.textContent = `Turno: ${currentPlayer}`;
-    subStatus.textContent = '2 jogadores';
-  } else {
-    if(currentPlayer === playerSym){
-      statusText.textContent = 'Sua vez';
-      subStatus.textContent = `Você joga como ${playerSym}`;
-    } else {
-      statusText.textContent = 'Máquina jogando...';
-      subStatus.textContent = `Dificuldade: ${difficulty}`;
-    }
-  }
-  scoreLabel.textContent = `${playerSym === 'X' ? 'Você' : 'Você'} ${scores.player} • Máquina ${scores.ai} • Empates ${scores.draws}`;
-}
-
-// ----------------------------
-// Clicks nas células
-// ----------------------------
-cells.forEach(cell=>{
-  cell.addEventListener('click', ()=> onCellClick(cell));
-  // acessibilidade: enter/space
-  cell.addEventListener('keydown', (e)=>{
-    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onCellClick(cell); }
-  });
-});
-
-function onCellClick(cell){
-  if(!running) return;
-  const idx = Number(cell.dataset.index);
-  if(boardState[idx]) return; // já preenchido
-  if(gameMode === 'pvc' && currentPlayer !== playerSym) return; // não é a vez do jogador
-  makeMove(idx, currentPlayer);
-  // após jogador, se for AI e jogo não terminou, chamar IA
-  if(running && gameMode === 'pvc' && currentPlayer === aiSym){
-    setTimeout(()=> aiMove(), 250);
-  }
-}
-
-// coloca X/O no índice para o jogador atual
-function makeMove(idx, sym){
-  if(!running) return;
-  boardState[idx] = sym;
-  const cell = cells[idx];
-  cell.textContent = sym;
-  cell.classList.add('placed');
-  cell.classList.add('disabled');
-  cell.setAttribute('aria-label', `Célula ${idx} — ${sym}`);
-  // checar vitória / empate
-  const result = checkWinner(boardState);
-  if(result){
-    endGame(result);
-    return;
-  }
-  // troca de jogador
-  currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
-  updateStatus();
-}
-
-function checkWinner(bState){
-  for(let i=0;i<WIN_COMBOS.length;i++){
-    const [a,b,c] = WIN_COMBOS[i];
-    if(bState[a] && bState[a] === bState[b] && bState[a] === bState[c]){
-      return { winner: bState[a], combo: [a,b,c] };
-    }
-  }
-  if(bState.every(v=>v !== null)){
-    return { winner: null, combo: null }; // empate
-  }
-  return null; // continua
-}
-
-function endGame(result){
-  running = false;
-  // empate
-  if(result.winner === null){
-    subStatus.textContent = 'Empate!';
-    statusText.textContent = 'Empate';
-    scores.draws++;
-    highlightDraw();
-  } else {
-    // quem ganhou?
-    const who = result.winner;
-    if(who === playerSym){
-      statusText.textContent = 'Você venceu!';
-      subStatus.textContent = `${playerSym} venceu — Parabéns!`;
-      scores.player++;
-    } else {
-      statusText.textContent = 'Máquina venceu';
-      subStatus.textContent = `${who} venceu — Tente novamente`;
-      scores.ai++;
-    }
-    drawWinningLine(result.combo);
-    launchConfetti();
-  }
-  // atualiza placar visível
-  scoreLabel.textContent = `${playerSym === 'X' ? 'Você' : 'Você'} ${scores.player} • Máquina ${scores.ai} • Empates ${scores.draws}`;
-  // desabilita células
-  cells.forEach(c=>c.classList.add('disabled'));
-}
-
-// destaque em empate (pouco efeito)
-function highlightDraw(){
-  cells.forEach((c,i)=>{
-    if(!boardState[i]){
-      c.style.opacity = 0.65;
-      setTimeout(()=> c.style.opacity = '', 600);
-    }
-  });
-}
-
-// ----------------------------
-// Linha de vitória (visual)
-// ----------------------------
-function drawWinningLine(combo){
-  // calcula centro das duas extremidades
-  const rects = combo.map(i => cells[i].getBoundingClientRect());
-  // pegar ponto central da célula 1 e célula 3
-  const p1 = { x: rects[0].left + rects[0].width/2, y: rects[0].top + rects[0].height/2 };
-  const p2 = { x: rects[2].left + rects[2].width/2, y: rects[2].top + rects[2].height/2 };
-  // converter para coordenadas relativas ao elemento que contém a linha (seu offsetParent)
-  const parentRect = lineEl.parentElement.getBoundingClientRect();
-  const x1 = p1.x - parentRect.left;
-  const y1 = p1.y - parentRect.top;
-  const x2 = p2.x - parentRect.left;
-  const y2 = p2.y - parentRect.top;
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const length = Math.hypot(dx,dy);
-  const angle = Math.atan2(dy,dx) * (180/Math.PI);
-  // posiciona linha no meio
-  const cx = (x1 + x2) / 2;
-  const cy = (y1 + y2) / 2;
-  lineEl.style.width = `${length}px`;
-  lineEl.style.height = `6px`;
-  lineEl.style.left = `${cx - length/2}px`;
-  lineEl.style.top = `${cy - 3}px`;
-  lineEl.style.transform = `rotate(${angle}deg)`;
-  lineEl.style.opacity = 1;
-  // pequeno fade-out após 2s
-  setTimeout(()=> lineEl.style.opacity = 0, 2200);
-}
-
-// ----------------------------
-// Confetti (simples)
-// ----------------------------
-function launchConfetti(){
-  const count = 28;
-  for(let i=0;i<count;i++){
-    const el = document.createElement('div');
-    el.className = 'confetti-piece';
-    el.style.left = `${Math.random()*100}vw`;
-    el.style.top = `${-10 - Math.random()*10}vh`;
-    el.style.width = `${8 + Math.random()*8}px`;
-    el.style.height = `${10 + Math.random()*10}px`;
-    el.style.background = randomColor();
-    el.style.transform = `translateY(0) rotate(${Math.random()*360}deg)`;
-    el.style.animationDuration = `${2 + Math.random()*2}s`;
-    document.body.appendChild(el);
-    // remover após animar
-    setTimeout(()=> el.remove(), 4200);
-  }
-}
-function randomColor(){
-  const palette = ['#ef4444','#f97316','#f59e0b','#10b981','#06b6d4','#3b82f6','#8b5cf6','#ec4899'];
-  return palette[Math.floor(Math.random()*palette.length)];
-}
-
-// ----------------------------
-// IA
-// ----------------------------
-function aiMove(){
-  if(!running) return;
-  // decide index com base na dificuldade
-  let idx = null;
-  if(difficulty === 'easy'){
-    idx = aiRandomMove();
-  } else if(difficulty === 'medium'){
-    idx = aiMediumMove();
-  } else {
-    // hard - minimax
-    idx = aiMinimaxMove();
-  }
-  if(idx !== null && idx !== undefined){
-    // adicionar pequeno delay visual
-    setTimeout(()=> {
-      makeMove(idx, aiSym);
-    }, 100);
-  }
-}
-
-// movimentos válidos
-function availableMoves(state){
-  const moves = [];
-  state.forEach((v,i)=>{ if(!v) moves.push(i); });
-  return moves;
-}
-
-// fácil: random
-function aiRandomMove(){
-  const moves = availableMoves(boardState);
-  if(moves.length === 0) return null;
-  return moves[Math.floor(Math.random()*moves.length)];
-}
-
-// médio: tenta ganhar -> bloquear -> centro -> canto -> aleatório
-function aiMediumMove(){
-  // 1. ganhar se possível
-  for(const idx of availableMoves(boardState)){
-    const copy = boardState.slice(); copy[idx] = aiSym;
-    if(checkWinner(copy) && checkWinner(copy).winner === aiSym) return idx;
-  }
-  // 2. bloquear jogador
-  for(const idx of availableMoves(boardState)){
-    const copy = boardState.slice(); copy[idx] = playerSym;
-    if(checkWinner(copy) && checkWinner(copy).winner === playerSym) return idx;
-  }
-  // 3. centro
-  if(!boardState[4]) return 4;
-  // 4. canto
-  const corners = [0,2,6,8].filter(i=>!boardState[i]);
-  if(corners.length) return corners[Math.floor(Math.random()*corners.length)];
-  // 5. aleatório
-  return aiRandomMove();
-}
-
-// difícil: minimax
-function aiMinimaxMove(){
-  // se poucos movimentos, usar heurísticas rápidas para performances
-  // minimax com poda simples
-  const best = minimax(boardState, aiSym);
-  return best.index;
-}
-
-function minimax(state, player){
-  // verificar resultados
-  const winnerObj = checkWinner(state);
-  if(winnerObj){
-    if(winnerObj.winner === aiSym) return { score: 10 };
-    else if(winnerObj.winner === playerSym) return { score: -10 };
-    else return { score: 0 };
-  }
-
-  const moves = [];
-  for(let i=0;i<9;i++){
-    if(!state[i]){
-      const move = {};
-      move.index = i;
-      state[i] = player;
-      const result = minimax(state, (player === aiSym) ? playerSym : aiSym);
-      move.score = result.score;
-      state[i] = null;
-      moves.push(move);
-    }
-  }
-
-  // escolha melhor
-  let bestMove;
-  if(player === aiSym){
-    let bestScore = -Infinity;
-    for(const m of moves){
-      if(m.score > bestScore){ bestScore = m.score; bestMove = m; }
-    }
-  } else {
-    let bestScore = Infinity;
-    for(const m of moves){
-      if(m.score < bestScore){ bestScore = m.score; bestMove = m; }
-    }
-  }
-  return bestMove || { index: null, score: 0 };
-}
-
-// ----------------------------
-// Inicia jogo pela primeira vez
-// ----------------------------
-startNewMatch();
-updateStatus();
-
 </script>
 </body>
 </html>
