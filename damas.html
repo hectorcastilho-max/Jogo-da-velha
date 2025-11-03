@@ -3,51 +3,56 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Damas Clássicas</title>
+<title>Damas Moderno — IA</title>
 <style>
-:root {
-  --board-color-light: #f0d9b5;
-  --board-color-dark: #b58863;
-  --piece-white: #ffffff;
-  --piece-black: #222222;
-  --accent: #3b82f6;
-  --text: #1f2937;
+:root{
+  --light:#f0d9b5;
+  --dark:#b58863;
+  --accent:#3b82f6;
+  --piece-red:#d32f2f;
+  --piece-black:#222;
+  --board-size:400px;
 }
-body {
+body{
   margin:0;
-  height:100vh;
+  font-family:Inter,sans-serif;
   display:flex;
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  font-family:Inter, sans-serif;
-  background: linear-gradient(135deg, #f7f3e9, #e6dcd0);
+  background: linear-gradient(135deg,#fff3e0,#ffe0b2);
 }
-h1 {margin-bottom:10px; color:var(--text);}
-#board {display:grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); box-shadow: 0 8px 24px rgba(0,0,0,0.2);}
-.cell {
-  width:60px; height:60px; display:flex; align-items:center; justify-content:center;
-}
-.cell.light {background: var(--board-color-light);}
-.cell.dark {background: var(--board-color-dark); cursor:pointer; position:relative;}
-.piece {
-  width:45px; height:45px; border-radius:50%; box-shadow:0 4px 8px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:20px; color:#000; transition: transform 0.1s;
-}
-.piece.white {background: var(--piece-white);}
-.piece.black {background: var(--piece-black); color: #fff;}
-.piece.dama {border: 2px solid var(--accent);}
-.controls {margin-top:15px; display:flex; gap:10px;}
-button {padding:8px 12px; border:none; border-radius:10px; cursor:pointer; font-weight:600; transition: 0.2s;}
+h1{margin-bottom:12px;color:#1f2937;}
+#container{display:flex;gap:20px;}
+#board {display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); width:var(--board-size); height:var(--board-size); box-shadow:0 8px 24px rgba(0,0,0,0.2);}
+.cell {width:100%; height:100%; display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; transition:0.1s; position:relative;}
+.cell.light {background: var(--light);}
+.cell.dark {background: var(--dark);}
+.cell.selected{outline:3px solid var(--accent);}
+.piece {width:80%; height:80%; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; color:white; font-size:20px; transition:0.2s;}
+.piece.red{background:var(--piece-red);}
+.piece.black{background:var(--piece-black);}
+#captured{display:flex; flex-direction:column; gap:12px;}
+.captured-row{display:flex; gap:4px;}
+.controls {margin-top:12px; display:flex; gap:10px;}
+button {padding:8px 12px; border:none; border-radius:10px; cursor:pointer; font-weight:600;}
 button:hover {transform:translateY(-2px);}
 .btn-primary {background:linear-gradient(90deg,var(--accent),#60a5fa); color:white;}
-#status {margin-top:10px; font-weight:600;}
+#status {margin-top:8px; font-weight:600;}
 </style>
 </head>
 <body>
 
-<h1>Damas Clássicas</h1>
-<div id="board"></div>
-<div id="status">Turno: Jogador Branco</div>
+<h1>Damas Moderno</h1>
+<div id="container">
+  <div id="board"></div>
+  <div id="captured">
+    <div>Peças capturadas:</div>
+    <div id="redCaptured" class="captured-row">Vermelhas: </div>
+    <div id="blackCaptured" class="captured-row">Pretas: </div>
+  </div>
+</div>
+<div id="status">Turno: Vermelho</div>
 <div class="controls">
   <button id="restartBtn" class="btn-primary">Reiniciar</button>
   <button id="backBtn">← Menu</button>
@@ -55,127 +60,156 @@ button:hover {transform:translateY(-2px);}
 </div>
 
 <audio id="bgAudio" loop autoplay>
-  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3a6d3f9d8e.mp3?filename=calm-classical-110598.mp3" type="audio/mpeg">
-</audio>
-<audio id="hoverSound">
-  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_7b2d90a43a.mp3?filename=soft-click-112002.mp3" type="audio/mpeg">
-</audio>
-<audio id="clickSound">
-  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_ef6d3df37a.mp3?filename=ui-click-112008.mp3" type="audio/mpeg">
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_05b1f0a23f.mp3?filename=calm-piano-110599.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-// ==== CONFIGURAÇÕES INICIAIS ====
+// ==== CONFIG ====
 const board = document.getElementById('board');
 const status = document.getElementById('status');
 const restartBtn = document.getElementById('restartBtn');
 const backBtn = document.getElementById('backBtn');
 const muteBtn = document.getElementById('muteBtn');
 const bgAudio = document.getElementById('bgAudio');
-const hoverSound = document.getElementById('hoverSound');
-const clickSound = document.getElementById('clickSound');
+const redCaptured = document.getElementById('redCaptured');
+const blackCaptured = document.getElementById('blackCaptured');
 
-let boardState = [];
-let selectedPiece = null;
-let currentPlayer = 'white';
+let boardState=[];
+let selected=null;
+let currentPlayer='red';
 
-// ==== FUNÇÕES DE ÁUDIO ====
-document.querySelectorAll('button').forEach(btn=>{
-  btn.addEventListener('mouseenter', ()=> hoverSound.play());
-  btn.addEventListener('click', ()=> clickSound.play());
-});
-
-// ==== CONSTRUÇÃO DO TABULEIRO ====
+// ==== INICIALIZAÇÃO DO TABULEIRO ====
 function createBoard(){
   board.innerHTML='';
-  boardState = [];
-  for(let row=0; row<8; row++){
-    let rowArr = [];
-    for(let col=0; col<8; col++){
-      const cell = document.createElement('div');
-      const isDark = (row+col)%2 !== 0;
-      cell.classList.add('cell', isDark?'dark':'light');
-      cell.dataset.row=row;
-      cell.dataset.col=col;
-      board.appendChild(cell);
-      // Configura peças iniciais
-      let piece=null;
-      if(isDark && row<3){piece={color:'black', dama:false};}
-      else if(isDark && row>4){piece={color:'white', dama:false};}
-      rowArr.push(piece);
+  boardState=[];
+  for(let r=0;r<8;r++){
+    let rowArr=[];
+    for(let c=0;c<8;c++){
+      const cell=document.createElement('div');
+      cell.classList.add('cell',(r+c)%2?'dark':'light');
+      cell.dataset.row=r;
+      cell.dataset.col=c;
+      let piece='';
+      if((r+c)%2 && r<3) piece='b'; // preta
+      if((r+c)%2 && r>4) piece='r'; // vermelha
       if(piece){
-        const pEl = document.createElement('div');
-        pEl.classList.add('piece', piece.color);
-        cell.appendChild(pEl);
+        const p=document.createElement('div');
+        p.classList.add('piece',piece==='r'?'red':'black');
+        p.textContent='';
+        cell.appendChild(p);
       }
+      board.appendChild(cell);
+      rowArr.push(piece);
     }
     boardState.push(rowArr);
   }
 }
-createBoard();
 
-// ==== LÓGICA SIMPLES DE MOVIMENTO (LOCAL 2J) ====
-board.addEventListener('click', e=>{
-  const cell = e.target.closest('.cell');
-  if(!cell) return;
-  const row = parseInt(cell.dataset.row);
-  const col = parseInt(cell.dataset.col);
-  const piece = boardState[row][col];
-
-  if(selectedPiece){
-    // Movimentar peça se estiver selecionada
-    movePiece(selectedPiece.row, selectedPiece.col, row, col);
-    selectedPiece=null;
-  } else {
-    if(piece && piece.color===currentPlayer){
-      selectedPiece={row,col};
-    }
-  }
-});
-
-function movePiece(fromRow, fromCol, toRow, toCol){
-  const piece = boardState[fromRow][fromCol];
-  const target = boardState[toRow][toCol];
-  if(target) return; // Só pode mover para vazio
-  const rowDiff = toRow - fromRow;
-  const colDiff = toCol - fromCol;
-  // Movimento diagonal simples
-  if(Math.abs(rowDiff)===1 && Math.abs(colDiff)===1){
-    boardState[toRow][toCol]=piece;
-    boardState[fromRow][fromCol]=null;
-    renderBoard();
-    togglePlayer();
-  }
-}
-
+// ==== RENDER ====
 function renderBoard(){
   board.querySelectorAll('.cell').forEach(cell=>{
+    const r=parseInt(cell.dataset.row);
+    const c=parseInt(cell.dataset.col);
     cell.innerHTML='';
-    const row = parseInt(cell.dataset.row);
-    const col = parseInt(cell.dataset.col);
-    const piece = boardState[row][col];
+    const piece = boardState[r][c];
     if(piece){
-      const pEl = document.createElement('div');
-      pEl.className='piece '+piece.color;
-      if(piece.dama) pEl.classList.add('dama');
-      cell.appendChild(pEl);
+      const p=document.createElement('div');
+      p.classList.add('piece',piece==='r'?'red':'black');
+      cell.appendChild(p);
     }
+    cell.classList.remove('selected');
+    if(selected && selected.r===r && selected.c===c) cell.classList.add('selected');
   });
 }
 
-function togglePlayer(){
-  currentPlayer = currentPlayer==='white'?'black':'white';
-  status.textContent=`Turno: Jogador ${currentPlayer==='white'?'Branco':'Preto'}`;
+// ==== MOVIMENTO + CAPTURA ====
+board.addEventListener('click', e=>{
+  const cell = e.target.closest('.cell');
+  if(!cell) return;
+  const r=parseInt(cell.dataset.row);
+  const c=parseInt(cell.dataset.col);
+  const piece = boardState[r][c];
+
+  if(selected){
+    const dr=r-selected.r;
+    const dc=c-selected.c;
+    // movimento simples diagonal 1 passo
+    if(Math.abs(dr)===1 && Math.abs(dc)===1 && !boardState[r][c]){
+      boardState[r][c]=boardState[selected.r][selected.c];
+      boardState[selected.r][selected.c]='';
+      selected=null;
+      switchTurn();
+    }
+    // captura diagonal
+    if(Math.abs(dr)===2 && Math.abs(dc)===2){
+      const midR=selected.r+dr/2;
+      const midC=selected.c+dc/2;
+      const captured=boardState[midR][midC];
+      if(captured && captured!==boardState[selected.r][selected.c]){
+        if(captured==='r') redCaptured.textContent += '● ';
+        else blackCaptured.textContent += '● ';
+        boardState[midR][midC]='';
+        boardState[r][c]=boardState[selected.r][selected.c];
+        boardState[selected.r][selected.c]='';
+        selected=null;
+        switchTurn();
+      }
+    }
+    renderBoard();
+  } else {
+    if(piece && ((piece==='r' && currentPlayer==='red')||(piece==='b' && currentPlayer==='black'))) selected={r,c};
+  }
+});
+
+// ==== IA SIMPLES PARA PRETO ====
+function aiMove(){
+  const moves=[];
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+      if(boardState[r][c]==='b'){
+        const dirs=[[-1,-1],[-1,1]];
+        for(let d of dirs){
+          const nr=r+d[0], nc=c+d[1];
+          if(nr>=0 && nr<8 && nc>=0 && nc<8){
+            if(!boardState[nr][nc]) moves.push({from:{r,c},to:{r:nr,c:nc}});
+          }
+        }
+      }
+    }
+  }
+  if(moves.length>0){
+    const m = moves[Math.floor(Math.random()*moves.length)];
+    boardState[m.to.r][m.to.c]=boardState[m.from.r][m.from.c];
+    boardState[m.from.r][m.from.c]='';
+    currentPlayer='red';
+    status.textContent='Turno: Vermelho';
+    renderBoard();
+  }
 }
 
-// ==== BOTOES ====
-restartBtn.addEventListener('click', ()=>{createBoard(); currentPlayer='white'; status.textContent='Turno: Jogador Branco';});
+function switchTurn(){
+  currentPlayer=currentPlayer==='red'?'black':'red';
+  status.textContent=`Turno: ${currentPlayer==='red'?'Vermelho':'Preto'}`;
+  if(currentPlayer==='black') setTimeout(aiMove,300);
+}
+
+// ==== BOTÕES ====
+restartBtn.addEventListener('click', ()=>{
+  createBoard();
+  redCaptured.textContent='Vermelhas: ';
+  blackCaptured.textContent='Pretas: ';
+  currentPlayer='red';
+  status.textContent='Turno: Vermelho';
+  renderBoard();
+});
 backBtn.addEventListener('click', ()=>{window.open('index.html','_self');});
 muteBtn.addEventListener('click', ()=>{
   if(bgAudio.paused){bgAudio.play(); muteBtn.textContent='Música: On';}
   else{bgAudio.pause(); muteBtn.textContent='Música: Off';}
 });
+
+createBoard();
+renderBoard();
 </script>
 </body>
-
 </html>
