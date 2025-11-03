@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paciência Klondike</title>
+<style>
+body {margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;font-family:Inter, sans-serif;background:#2E7D32;}
+h1 {color:#fff;margin:10px;}
+#tableau {display:flex; gap:8px; margin-top:12px;}
+.column {width:80px; min-height:200px; background:rgba(255,255,255,0.05); border-radius:6px; padding:4px; display:flex; flex-direction:column; align-items:center;}
+.card {width:70px; height:100px; border-radius:6px; background:#fff; margin-top:-80px; display:flex; align-items:center; justify-content:center; font-weight:bold; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,0.2); transition:0.2s;}
+.card.red {color:red;}
+.controls {margin-top:12px; display:flex; gap:10px;}
+button {padding:8px 12px; border:none; border-radius:10px; cursor:pointer; font-weight:600;}
+button:hover {transform:translateY(-2px);}
+.btn-primary {background:linear-gradient(90deg,#3b82f6,#60a5fa); color:white;}
+</style>
+</head>
+<body>
+
+<h1>Paciência Klondike</h1>
+<div id="tableau"></div>
+<div class="controls">
+  <button id="restartBtn" class="btn-primary">Reiniciar</button>
+  <button id="backBtn">← Menu</button>
+  <button id="muteBtn">Música: On</button>
+</div>
+
+<audio id="bgAudio" loop autoplay>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_05b1f0a23f.mp3?filename=calm-piano-110599.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+// ==== CONFIG ====
+const tableau=document.getElementById('tableau');
+const restartBtn=document.getElementById('restartBtn');
+const backBtn=document.getElementById('backBtn');
+const muteBtn=document.getElementById('muteBtn');
+const bgAudio=document.getElementById('bgAudio');
+
+// ==== CRIAR COLUNAS ====
+const suits=['♠','♥','♣','♦'];
+function createDeck(){
+  let deck=[];
+  for(let s of suits){
+    for(let i=1;i<=13;i++){
+      deck.push({suit:s, value:i});
+    }
+  }
+  return deck.sort(()=>Math.random()-0.5);
+}
+
+function initTableau(){
+  tableau.innerHTML='';
+  const deck=createDeck();
+  for(let i=0;i<7;i++){
+    const col=document.createElement('div'); col.className='column';
+    for(let j=0;j<=i;j++){
+      const card=document.createElement('div'); card.className='card';
+      const c=deck.pop();
+      card.textContent=(c.value===1?'A':c.value>10?['J','Q','K'][c.value-11]:c.value)+c.suit;
+      if(c.suit==='♥'||c.suit==='♦') card.classList.add('red');
+      col.appendChild(card);
+    }
+    tableau.appendChild(col);
+  }
+}
+initTableau();
+
+// ==== BOTÕES ====
+restartBtn.addEventListener('click', ()=>{initTableau();});
+backBtn.addEventListener('click', ()=>{window.open('index.html','_self');});
+muteBtn.addEventListener('click', ()=>{
+  if(bgAudio.paused){bgAudio.play(); muteBtn.textContent='Música: On';}
+  else{bgAudio.pause(); muteBtn.textContent='Música: Off';}
+});
+</script>
+</body>
+</html>
