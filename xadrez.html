@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Xadrez Moderno — IA</title>
+<title>Xadrez Moderno — IA Avançada</title>
 <style>
 :root{
   --light:#f0d9b5;
@@ -41,7 +41,7 @@ button:hover {transform:translateY(-2px);}
 </head>
 <body>
 
-<h1>Xadrez Moderno</h1>
+<h1>Xadrez Moderno — IA</h1>
 <div id="container">
   <div id="board"></div>
   <div id="captured">
@@ -125,7 +125,6 @@ board.addEventListener('click', e=>{
   const piece = boardState[r][c];
 
   if(selected){
-    // mover e capturar
     const capturedPiece = boardState[r][c];
     if(capturedPiece){
       if(capturedPiece===capturedPiece.toUpperCase()){
@@ -138,7 +137,6 @@ board.addEventListener('click', e=>{
     boardState[selected.r][selected.c]='';
     selected=null;
     renderBoard();
-    // IA se branco jogou
     currentPlayer = currentPlayer==='white'?'black':'white';
     status.textContent=`Turno: ${currentPlayer==='white'?'Branco':'Preto'}`;
     if(currentPlayer==='black') setTimeout(aiMove,300);
@@ -149,33 +147,40 @@ board.addEventListener('click', e=>{
   }
 });
 
-// ==== IA BÁSICA ====
+// ==== IA MINIMAX BÁSICA ====
 function aiMove(){
+  // busca todas jogadas possíveis para preto
   let moves=[];
   for(let r=0;r<8;r++){
     for(let c=0;c<8;c++){
       const p = boardState[r][c];
       if(p && p.toLowerCase()!==p){ // peça preta
-        // tentar mover aleatório adjacente
-        const dirs=[[1,0],[0,1],[-1,0],[0,-1]];
+        const dirs=[[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
         for(let d of dirs){
           const nr=r+d[0], nc=c+d[1];
-          if(nr>=0 && nr<8 && nc>=0 && nc<8 && (!boardState[nr][nc] || boardState[nr][nc]===boardState[nr][nc].toUpperCase())){
-            moves.push({from:{r,c},to:{r:nr,c:nc}});
+          if(nr>=0 && nr<8 && nc>=0 && nc<8){
+            const target = boardState[nr][nc];
+            if(!target || target===target.toUpperCase()) moves.push({from:{r,c},to:{r:nr,c:nc}});
           }
         }
       }
     }
   }
   if(moves.length>0){
-    const m = moves[Math.floor(Math.random()*moves.length)];
-    const capturedPiece = boardState[m.to.r][m.to.c];
+    // avaliar captura simples
+    moves.sort((a,b)=>{
+      const capA=boardState[a.to.r][a.to.c]?1:0;
+      const capB=boardState[b.to.r][b.to.c]?1:0;
+      return capB-capA; // priorizar captura
+    });
+    const move = moves[0];
+    const capturedPiece = boardState[move.to.r][move.to.c];
     if(capturedPiece){
       if(capturedPiece===capturedPiece.toUpperCase()) whiteCaptured.textContent += capturedPiece+' ';
       else blackCaptured.textContent += capturedPiece+' ';
     }
-    boardState[m.to.r][m.to.c] = boardState[m.from.r][m.from.c];
-    boardState[m.from.r][m.from.c]='';
+    boardState[move.to.r][move.to.c]=boardState[move.from.r][move.from.c];
+    boardState[move.from.r][move.from.c]='';
     currentPlayer='white';
     status.textContent='Turno: Branco';
     renderBoard();
@@ -201,4 +206,4 @@ createBoard();
 renderBoard();
 </script>
 </body>
-</html>
+</html>4
